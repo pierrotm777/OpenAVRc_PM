@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<wxsmith>
+	<object class="wxFrame" name="BluetoothFrame">
+		<title>Bluetooth</title>
+		<size>645,409</size>
+		<id_arg>0</id_arg>
+		<style>wxDEFAULT_DIALOG_STYLE</style>
+		<handler function="OnClose" entry="EVT_CLOSE" />
+		<object class="wxPanel" name="ID_PANEL1" variable="Panel1" member="yes">
+			<pos>392,176</pos>
+			<object class="wxStaticBox" name="ID_STATICBOX1" variable="StaticBoxCom" member="yes">
+				<label>Communication</label>
+				<pos>8,8</pos>
+				<size>624,88</size>
+			</object>
+			<object class="wxComboBox" name="ID_COMBOBOX1" variable="ComboBoxCom" member="yes">
+				<pos>64,32</pos>
+				<size>72,23</size>
+				<handler function="OnComboBoxComSelected" entry="EVT_COMBOBOX" />
+				<handler function="OnComboBoxComDropdown" entry="EVT_COMBOBOX_DROPDOWN" />
+			</object>
+			<object class="wxStaticText" name="ID_STATICTEXT1" variable="StaticText1" member="yes">
+				<label>Port :</label>
+				<pos>16,32</pos>
+				<size>40,16</size>
+				<style>wxALIGN_RIGHT</style>
+			</object>
+			<object class="wxStaticText" name="ID_STATICTEXT2" variable="StaticText2" member="yes">
+				<label>Mémoire libre :</label>
+				<pos>160,32</pos>
+				<size>96,16</size>
+				<style>wxALIGN_RIGHT</style>
+			</object>
+			<object class="wxStaticText" name="ID_STATICTEXT3" variable="StaticTextFreeMem" member="yes">
+				<label>------</label>
+				<pos>264,32</pos>
+				<size>56,16</size>
+				<style>wxALIGN_LEFT</style>
+			</object>
+			<object class="wxStaticText" name="ID_STATICTEXT4" variable="StaticTextVersion" member="yes">
+				<label></label>
+				<pos>24,64</pos>
+				<size>360,16</size>
+			</object>
+			<object class="wxBitmapButton" name="ID_REBOOTBUTTON" variable="BitmapButtonReboot" member="yes">
+				<bitmap stock_id="wxART_WARNING" stock_client="wxART_BUTTON" />
+				<pos>568,24</pos>
+				<size>48,24</size>
+				<tooltip>Redémarrer</tooltip>
+				<handler function="OnBitmapButtonRebootClick" entry="EVT_BUTTON" />
+			</object>
+			<object class="wxStaticBox" name="ID_STATICBOX2" variable="StaticBoxLocal1" member="yes">
+				<label>Local</label>
+				<pos>8,104</pos>
+				<size>216,296</size>
+			</object>
+			<object class="wxStaticBox" name="ID_STATICBOXSD" variable="StaticBoxSD" member="yes">
+				<label>Carte SD</label>
+				<pos>232,104</pos>
+				<size>216,296</size>
+			</object>
+			<object class="wxTreeCtrl" name="ID_TREECTRLSD" variable="TctrlSd" member="yes">
+				<image_list>&lt;none&gt;</image_list>
+				<tree_items>
+					<élément>TctrlSd</élément>
+					<élément>&lt;none&gt;</élément>
+				</tree_items>
+				<items_text>
+					<item2>TctrlSd</item2>
+					<item2>&lt;none&gt;</item2>
+				</items_text>
+				<pos>240,120</pos>
+				<size>200,272</size>
+				<handler function="OnTctrlSdBeginDrag" entry="EVT_TREE_BEGIN_DRAG" />
+				<handler function="OnTctrlSdItemRightClick" entry="EVT_TREE_ITEM_RIGHT_CLICK" />
+			</object>
+			<object class="wxGenericDirCtrl" name="ID_GENERICDIRCTRL1" variable="DirCtrl" member="yes">
+				<defaultfolder></defaultfolder>
+				<filter></filter>
+				<pos>16,120</pos>
+				<size>200,272</size>
+			</object>
+			<object class="wxBitmapButton" name="ID_BITMAPBUTTONREFRESH" variable="BitmapButtonRefresh" member="yes">
+				<bitmap stock_id="wxART_REDO" stock_client="wxART_BUTTON" />
+				<pos>568,56</pos>
+				<size>48,24</size>
+				<tooltip>Rafraichir</tooltip>
+				<handler function="OnBitmapButtonRefreshClick" entry="EVT_BUTTON" />
+			</object>
+			<object class="wxGauge" name="ID_GAUGE" variable="Gauge" member="yes">
+				<pos>328,24</pos>
+				<size>224,16</size>
+			</object>
+		</object>
+		<object class="wxTimer" name="ID_TIMERRX" variable="TimerRX" member="yes">
+			<interval>200</interval>
+			<oneshot>1</oneshot>
+			<handler function="OnTimerRXTrigger" entry="EVT_TIMER" />
+		</object>
+	</object>
+</wxsmith>
