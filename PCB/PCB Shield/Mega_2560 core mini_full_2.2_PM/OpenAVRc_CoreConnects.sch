@@ -165,19 +165,7 @@ F 3 "" H 2350 4850 50  0000 C CNN
 $EndComp
 NoConn ~ 2900 4700
 NoConn ~ 2800 5200
-NoConn ~ 3750 3250
 NoConn ~ 2700 4700
-$Comp
-L Mega_2560-core-mini_full_2.2-rescue:C-RESCUE-Mega_2560_core_mini_full_2.0-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.2-rescue C18
-U 1 1 59C5DE5F
-P 3900 4950
-F 0 "C18" H 3925 5050 50  0000 L CNN
-F 1 "100nF" H 3925 4850 50  0000 L CNN
-F 2 "Capacitors_SMD:C_1206" H 3938 4800 50  0001 C CNN
-F 3 "" H 3900 4950 50  0000 C CNN
-	1    3900 4950
-	0    1    1    0   
-$EndComp
 $Comp
 L Mega_2560-core-mini_full_2.2-rescue:GND-RESCUE-Mega_2560_core_mini_full_2.0-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.2-rescue #PWR0138
 U 1 1 59C5DE66
@@ -195,7 +183,7 @@ U 1 1 59C5DE6C
 P 4600 2100
 F 0 "C19" V 4550 2200 50  0000 L CNN
 F 1 "100nF" V 4550 1800 50  0000 L CNN
-F 2 "Capacitors_SMD:C_1206" H 4638 1950 50  0001 C CNN
+F 2 "Capacitors_SMD:C_1206" H 4638 1950 50  0000 C CNN
 F 3 "" H 4600 2100 50  0000 C CNN
 	1    4600 2100
 	0    1    1    0   
@@ -277,41 +265,41 @@ Miso
 $Comp
 L Mega_2560-core-mini_full_2.2-rescue:GND-RESCUE-Mega_2560_core_mini_full_2.0-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.2-rescue #PWR0143
 U 1 1 59C5BE5B
-P 8750 1800
-F 0 "#PWR0143" H 8750 1550 50  0001 C CNN
-F 1 "GND" H 8750 1650 50  0000 C CNN
-F 2 "" H 8750 1800 50  0000 C CNN
-F 3 "" H 8750 1800 50  0000 C CNN
-	1    8750 1800
+P 8700 1750
+F 0 "#PWR0143" H 8700 1500 50  0001 C CNN
+F 1 "GND" H 8700 1600 50  0000 C CNN
+F 2 "" H 8700 1750 50  0000 C CNN
+F 3 "" H 8700 1750 50  0000 C CNN
+	1    8700 1750
 	1    0    0    -1  
 $EndComp
-Text Label 9050 2050 1    60   ~ 0
+Text Label 9000 2000 1    60   ~ 0
 Lcd_vo
-Text Label 10250 2050 1    60   ~ 0
+Text Label 10200 2000 1    60   ~ 0
 Lcd_A0
-Text Label 10150 2050 1    60   ~ 0
+Text Label 10100 2000 1    60   ~ 0
 Lcd_r/w
-Text Label 10050 2050 1    60   ~ 0
+Text Label 10000 2000 1    60   ~ 0
 Lcd_e
-Text Label 9250 2050 1    60   ~ 0
+Text Label 9200 2000 1    60   ~ 0
 Lcd_db0
-Text Label 9350 2050 1    60   ~ 0
+Text Label 9300 2000 1    60   ~ 0
 Lcd_db1
-Text Label 9450 2050 1    60   ~ 0
+Text Label 9400 2000 1    60   ~ 0
 Lcd_db2
-Text Label 9550 2050 1    60   ~ 0
+Text Label 9500 2000 1    60   ~ 0
 Lcd_db3
-Text Label 9650 2050 1    60   ~ 0
+Text Label 9600 2000 1    60   ~ 0
 Lcd_db4
-Text Label 9850 2050 1    60   ~ 0
+Text Label 9800 2000 1    60   ~ 0
 Lcd_db6
-Text Label 9950 2050 1    60   ~ 0
+Text Label 9900 2000 1    60   ~ 0
 Lcd_db7
-Text Label 10350 2050 1    60   ~ 0
+Text Label 10300 2000 1    60   ~ 0
 Lcd_rst
-Text Label 10200 3250 1    60   ~ 0
+Text Label 10150 3200 1    60   ~ 0
 Lcd_bla
-Text Label 10550 2050 1    60   ~ 0
+Text Label 10500 2000 1    60   ~ 0
 Lcd_blk
 $Comp
 L Mega_2560-core-mini_full_2.2-rescue:C-RESCUE-Mega_2560_core_mini_full_2.0-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.2-rescue C3
@@ -319,7 +307,7 @@ U 1 1 59C5BE6F
 P 7200 1800
 F 0 "C3" H 7225 1900 50  0000 L CNN
 F 1 "100nF" H 7225 1700 50  0000 L CNN
-F 2 "Capacitors_SMD:C_1206" H 7238 1650 50  0001 C CNN
+F 2 "Mylib_v2.2:C_1206" H 7238 1650 50  0001 C CNN
 F 3 "" H 7200 1800 50  0000 C CNN
 	1    7200 1800
 	0    1    1    0   
@@ -327,49 +315,49 @@ $EndComp
 $Comp
 L Mega_2560-core-mini_full_2.2-rescue:CONN_01X20-Mega_2560-core-mini_full_2.1-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.2-rescue P16
 U 1 1 59C5BE76
-P 9700 1450
-F 0 "P16" H 9700 2500 50  0000 C CNN
-F 1 "LCD" V 9800 1450 50  0000 C CNN
-F 2 "anthoperso:Pin_Header_Straight_2x10_Pitch2.54mm" H 9700 1450 50  0001 C CNN
-F 3 "" H 9700 1450 50  0000 C CNN
-	1    9700 1450
+P 9650 1400
+F 0 "P16" H 9650 2450 50  0000 C CNN
+F 1 "LCD" V 9750 1400 50  0000 C CNN
+F 2 "anthoperso:Pin_Header_Straight_2x10_Pitch2.54mm" H 9650 1400 50  0001 C CNN
+F 3 "" H 9650 1400 50  0000 C CNN
+	1    9650 1400
 	0    -1   -1   0   
 $EndComp
-Text Label 10650 2050 1    60   ~ 0
+Text Label 10600 2000 1    60   ~ 0
 Lcd_cs
 $Comp
 L Mega_2560-core-mini_full_2.2-rescue:GND-RESCUE-Mega_2560_core_mini_full_2.0-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.2-rescue #PWR0144
 U 1 1 59C5BE7F
-P 10550 2050
-F 0 "#PWR0144" H 10550 1800 50  0001 C CNN
-F 1 "GND" H 10550 1900 50  0000 C CNN
-F 2 "" H 10550 2050 50  0000 C CNN
-F 3 "" H 10550 2050 50  0000 C CNN
-	1    10550 2050
+P 10500 2000
+F 0 "#PWR0144" H 10500 1750 50  0001 C CNN
+F 1 "GND" H 10500 1850 50  0000 C CNN
+F 2 "" H 10500 2000 50  0000 C CNN
+F 3 "" H 10500 2000 50  0000 C CNN
+	1    10500 2000
 	1    0    0    -1  
 $EndComp
-Text Label 9750 2050 1    60   ~ 0
+Text Label 9700 2000 1    60   ~ 0
 Lcd_db5
 $Comp
 L Mega_2560-core-mini_full_2.2-rescue:POT-RESCUE-Mega_2560_core_mini_full_2.0-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.2-rescue RV6
 U 1 1 59C5BE8C
-P 10200 2700
-F 0 "RV6" V 10100 2700 50  0000 C CNN
-F 1 "1K" V 10200 2700 50  0000 C CNN
-F 2 "Mylib_v2.2:Potentiometer_Trimmer_Bourns_3296W" H 10200 2700 50  0001 C CNN
-F 3 "" H 10200 2700 50  0000 C CNN
-	1    10200 2700
+P 10150 2650
+F 0 "RV6" V 10050 2650 50  0000 C CNN
+F 1 "1K" V 10150 2650 50  0000 C CNN
+F 2 "Mylib_v2.2:Potentiometer_Trimmer_Bourns_3296W" H 10150 2650 50  0001 C CNN
+F 3 "" H 10150 2650 50  0000 C CNN
+	1    10150 2650
 	1    0    0    -1  
 $EndComp
 $Comp
 L Mega_2560-core-mini_full_2.2-rescue:POT-RESCUE-Mega_2560_core_mini_full_2.0-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.2-rescue RV1
 U 1 1 59C5BE93
-P 9150 2400
-F 0 "RV1" V 9050 2400 50  0000 C CNN
-F 1 "10K" V 9150 2400 50  0000 C CNN
-F 2 "Mylib_v2.2:Potentiometer_Trimmer_Bourns_3296W" H 9150 2400 50  0001 C CNN
-F 3 "" H 9150 2400 50  0000 C CNN
-	1    9150 2400
+P 9100 2350
+F 0 "RV1" V 9000 2350 50  0000 C CNN
+F 1 "10K" V 9100 2350 50  0000 C CNN
+F 2 "Mylib_v2.2:Potentiometer_Trimmer_Bourns_3296W" H 9100 2350 50  0001 C CNN
+F 3 "" H 9100 2350 50  0000 C CNN
+	1    9100 2350
 	-1   0    0    -1  
 $EndComp
 $Comp
@@ -519,7 +507,7 @@ Text GLabel 3000 5650 3    60   Input ~ 0
 Sw_gear
 Text GLabel 3100 5650 3    60   Input ~ 0
 Sw_id2
-Text GLabel 8850 2250 3    60   Input ~ 0
+Text GLabel 8800 2200 3    60   Input ~ 0
 LCD_VCC
 Text GLabel 1300 3250 0    60   Output ~ 0
 Vibreur
@@ -607,12 +595,12 @@ $EndComp
 $Comp
 L Mega_2560-core-mini_full_2.2-rescue:R-RESCUE-Mega_2560_core_mini_full_2.0-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.2-rescue R40
 U 1 1 5A718CF7
-P 10450 2350
-F 0 "R40" V 10350 2350 50  0000 C CNN
-F 1 "100" V 10450 2350 50  0000 C CNN
-F 2 "Mylib_v2.2:R_1206" V 10380 2350 50  0001 C CNN
-F 3 "" H 10450 2350 50  0000 C CNN
-	1    10450 2350
+P 10400 2300
+F 0 "R40" V 10300 2300 50  0000 C CNN
+F 1 "100" V 10400 2300 50  0000 C CNN
+F 2 "Mylib_v2.2:R_1206" V 10330 2300 50  0001 C CNN
+F 3 "" H 10400 2300 50  0000 C CNN
+	1    10400 2300
 	1    0    0    -1  
 $EndComp
 Text GLabel 2700 5650 3    60   Output ~ 0
@@ -628,54 +616,54 @@ Wire Wire Line
 Wire Wire Line
 	1850 2950 1450 2950
 Wire Wire Line
-	8850 2150 8850 2250
+	8800 2100 8800 2200
 Wire Wire Line
-	8950 2150 8850 2150
-Connection ~ 8750 1700
+	8900 2100 8800 2100
+Connection ~ 8700 1650
 Wire Wire Line
-	8850 1700 8750 1700
+	8800 1650 8700 1650
 Wire Wire Line
-	8850 1650 8850 1700
+	8800 1600 8800 1650
 Wire Wire Line
-	8750 1650 8750 1700
+	8700 1600 8700 1650
 Wire Wire Line
 	8500 5400 8500 5500
 Wire Wire Line
 	8100 4600 8100 4700
 Wire Wire Line
-	9000 2250 9000 2400
+	8950 2200 8950 2350
 Wire Wire Line
-	9050 2250 9000 2250
+	9000 2200 8950 2200
 Wire Wire Line
-	9150 2650 9150 2550
+	9100 2600 9100 2500
 Wire Wire Line
-	9050 1650 9050 2250
+	9000 1600 9000 2200
 Wire Wire Line
-	8950 1650 8950 2150
+	8900 1600 8900 2100
 Wire Wire Line
-	10450 1650 10450 2200
+	10400 1600 10400 2150
 Wire Wire Line
-	10200 2850 10200 3250
+	10150 2800 10150 3200
 Wire Wire Line
-	10350 1650 10350 2050
+	10300 1600 10300 2000
 Wire Wire Line
-	10150 1650 10150 2050
+	10100 1600 10100 2000
 Wire Wire Line
-	10050 1650 10050 2050
+	10000 1600 10000 2000
 Wire Wire Line
-	9850 1650 9850 2050
+	9800 1600 9800 2000
 Wire Wire Line
-	9750 1650 9750 2050
+	9700 1600 9700 2000
 Wire Wire Line
-	9650 1650 9650 2050
+	9600 1600 9600 2000
 Wire Wire Line
-	9550 1650 9550 2050
+	9500 1600 9500 2000
 Wire Wire Line
-	9450 1650 9450 2050
+	9400 1600 9400 2000
 Wire Wire Line
-	9350 1650 9350 2050
+	9300 1600 9300 2000
 Wire Wire Line
-	9250 1650 9250 2050
+	9200 1600 9200 2000
 Wire Wire Line
 	6950 1600 6950 2050
 Wire Wire Line
@@ -687,15 +675,15 @@ Wire Wire Line
 Wire Wire Line
 	7150 1600 7350 1600
 Wire Wire Line
-	10650 1650 10650 2050
+	10600 1600 10600 2000
 Wire Wire Line
-	10550 2050 10550 1650
+	10500 2000 10500 1600
 Wire Wire Line
-	9950 1650 9950 2050
+	9900 1600 9900 2000
 Wire Wire Line
-	10250 1650 10250 2050
+	10200 1600 10200 2000
 Wire Wire Line
-	9150 2250 9150 1650
+	9100 2200 9100 1600
 Wire Wire Line
 	2400 3350 2350 3350
 Wire Wire Line
@@ -951,9 +939,9 @@ Wire Wire Line
 Wire Wire Line
 	7500 4950 7400 4950
 Wire Wire Line
-	10450 2500 10450 2700
+	10400 2450 10400 2650
 Wire Wire Line
-	10450 2700 10350 2700
+	10400 2650 10300 2650
 Wire Wire Line
 	3750 2450 3500 2450
 Wire Wire Line
@@ -1004,7 +992,7 @@ $EndComp
 Wire Wire Line
 	2400 3450 2350 3450
 Wire Wire Line
-	8750 1700 8750 1800
+	8700 1650 8700 1750
 Wire Wire Line
 	4400 2250 4900 2250
 Wire Wire Line
@@ -15583,12 +15571,12 @@ Wire Wire Line
 $Comp
 L Mega_2560-core-mini_full_2.2-rescue:GND-RESCUE-Mega_2560_core_mini_full_2.0-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.2-rescue #PWR0151
 U 1 1 59C5BE86
-P 9150 2650
-F 0 "#PWR0151" H 9150 2400 50  0001 C CNN
-F 1 "GND" H 9150 2500 50  0000 C CNN
-F 2 "" H 9150 2650 50  0000 C CNN
-F 3 "" H 9150 2650 50  0000 C CNN
-	1    9150 2650
+P 9100 2600
+F 0 "#PWR0151" H 9100 2350 50  0001 C CNN
+F 1 "GND" H 9100 2450 50  0000 C CNN
+F 2 "" H 9100 2600 50  0000 C CNN
+F 3 "" H 9100 2600 50  0000 C CNN
+	1    9100 2600
 	1    0    0    -1  
 $EndComp
 Text Notes 8400 4350 1    60   ~ 0
@@ -15697,5 +15685,105 @@ F 2 "Mylib_v2.2:Pin_Header_Straight_1x02_Pitch2.54mm" H 4267 6517 50  0001 C CNN
 F 3 "" H 4350 6700 50  0000 C CNN
 	1    4350 6700
 	-1   0    0    1   
+$EndComp
+Text GLabel 3700 3250 0    60   BiDi ~ 0
+SCC
+Wire Wire Line
+	3750 3250 3700 3250
+$Comp
+L Mega_2560-core-mini_full_2.2-rescue:CONN_01X03-Mega_2560-core-mini_full_2.1-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.2-rescue P27
+U 1 1 6011B79A
+P 7950 1400
+F 0 "P27" H 8050 1600 50  0000 R CNN
+F 1 "SCC" V 8050 1500 50  0000 R CNN
+F 2 "Mylib_v2.2:Pin_Header_Straight_1x03_Pitch2.54mm" V 7822 1212 50  0001 R CNN
+F 3 "" H 7950 1400 50  0000 C CNN
+	1    7950 1400
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Mega_2560-core-mini_full_2.2-rescue:R-RESCUE-Mega_2560_core_mini_full_2.0-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.2-rescue R48
+U 1 1 6011C671
+P 7850 1900
+F 0 "R48" V 7800 1700 50  0000 C CNN
+F 1 "1K" V 7850 1900 50  0000 C CNN
+F 2 "Mylib_v2.2:R_1206" V 7780 1900 50  0001 C CNN
+F 3 "" H 7850 1900 50  0000 C CNN
+	1    7850 1900
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mega_2560-core-mini_full_2.2-rescue:GND-RESCUE-Mega_2560_core_mini_full_2.0-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.2-rescue #PWR0150
+U 1 1 6011DBBA
+P 8050 1700
+F 0 "#PWR0150" H 8050 1450 50  0001 C CNN
+F 1 "GND" V 8050 1500 50  0000 C CNN
+F 2 "" H 8050 1700 50  0000 C CNN
+F 3 "" H 8050 1700 50  0000 C CNN
+	1    8050 1700
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mega_2560-core-mini_full_2.2-rescue:VCC-power1 #PWR0155
+U 1 1 6011ED49
+P 7950 1700
+F 0 "#PWR0155" H 7950 1550 50  0001 C CNN
+F 1 "VCC" V 7950 1900 50  0000 C CNN
+F 2 "" H 7950 1700 50  0000 C CNN
+F 3 "" H 7950 1700 50  0000 C CNN
+	1    7950 1700
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	8050 1700 8050 1600
+Wire Wire Line
+	7950 1700 7950 1600
+Wire Wire Line
+	7850 1750 7850 1650
+$Comp
+L Mega_2560-core-mini_full_2.2-rescue:R-RESCUE-Mega_2560_core_mini_full_2.0-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.2-rescue R47
+U 1 1 601688DF
+P 7700 1900
+F 0 "R47" V 7650 1700 50  0000 C CNN
+F 1 "100K" V 7700 1900 50  0000 C CNN
+F 2 "Mylib_v2.2:R_1206" V 7630 1900 50  0001 C CNN
+F 3 "" H 7700 1900 50  0000 C CNN
+	1    7700 1900
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mega_2560-core-mini_full_2.2-rescue:GND-RESCUE-Mega_2560_core_mini_full_2.0-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.2-rescue #PWR0156
+U 1 1 6017730F
+P 7700 2200
+F 0 "#PWR0156" H 7700 1950 50  0001 C CNN
+F 1 "GND" H 7700 2050 50  0000 C CNN
+F 2 "" H 7700 2200 50  0000 C CNN
+F 3 "" H 7700 2200 50  0000 C CNN
+	1    7700 2200
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	7700 2050 7700 2200
+Text GLabel 7850 2200 3    60   BiDi ~ 0
+SCC
+Wire Wire Line
+	7850 2200 7850 2050
+Wire Wire Line
+	7700 1750 7700 1650
+Wire Wire Line
+	7700 1650 7850 1650
+Connection ~ 7850 1650
+Wire Wire Line
+	7850 1650 7850 1600
+$Comp
+L Mega_2560-core-mini_full_2.2-rescue:C-RESCUE-Mega_2560_core_mini_full_2.0-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.1-rescue-Mega_2560-core-mini_full_2.2-rescue C18
+U 1 1 601D50AD
+P 3900 4950
+F 0 "C18" V 3850 5050 50  0000 L CNN
+F 1 "100nF" V 3850 4650 50  0000 L CNN
+F 2 "Mylib_v2.2:C_1206" H 3938 4800 50  0000 C CNN
+F 3 "" H 3900 4950 50  0000 C CNN
+	1    3900 4950
+	0    1    1    0   
 $EndComp
 $EndSCHEMATC
