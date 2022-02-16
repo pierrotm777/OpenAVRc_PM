@@ -729,7 +729,7 @@ uintptr_t CRSF_Cmds(enum ProtoCmds cmd)
 //"Power",  "10mW", "25mW", "50mW", "100mW", "250mW", "500mW", "1000mW", "2000mW"
 void CRSF_SetPower(uint8_t CRSFPower)
 {
-    uint8_t CRSF_output;
+    uint16_t CRSF_output;
 
   switch(CRSFPower)
     {

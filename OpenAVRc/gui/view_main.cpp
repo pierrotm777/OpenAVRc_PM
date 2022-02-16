@@ -165,8 +165,8 @@ void displayBattVoltage()
 {
 #if defined(BATTGRAPH)
   putsVBat(VBATT_X-8, VBATT_Y+1, 0);
-#if defined(SPIMODULES)
-  if (!IS_SPIMODULES_PROTOCOL(g_model.rfProtocol) || (IS_SPIMODULES_PROTOCOL(g_model.rfProtocol) && DOUBLE_BLINK_ON_PHASE))
+#if defined(SPIMODULES) || (SERIAL_PROTOCOL==CRSF)
+  if ((IS_CRSF_PROTOCOL(g_model.rfProtocol) && DOUBLE_BLINK_ON_PHASE)|| (IS_SPIMODULES_PROTOCOL(g_model.rfProtocol) && DOUBLE_BLINK_ON_PHASE))
     {
 #endif
       lcdDrawFilledRect(VBATT_X-25, VBATT_Y+9, 21, 5);
@@ -176,30 +176,46 @@ void displayBattVoltage()
         lcdDrawSolidVerticalLine(VBATT_X-24+i, VBATT_Y+10, 3);
       if (!IS_TXBATT_WARNING() || BLINK_ON_PHASE)
         lcdDrawFilledRect(VBATT_X-26, VBATT_Y, 24, 15);
-#if defined(SPIMODULES)
+#if defined(SPIMODULES) || (SERIAL_PROTOCOL==CRSF)
     }
   else
     {
       lcdDrawFilledRect(VBATT_X-26, VBATT_Y, 24, 8);
-      lcdDrawNumberNAtt(VBATT_X+1, VBATTUNIT_Y+1, RFPowerOut, CONDENSED|PREC2);
-      lcdDrawText(VBATT_X+1,VBATTUNIT_Y+1,STR_mW);
+      if (RFPowerOut < 1000)
+      {
+        lcdDrawNumberNAtt(VBATT_X+1, VBATTUNIT_Y+1, RFPowerOut*100, CONDENSED|PREC2);
+        lcdDrawText(VBATT_X+1,VBATTUNIT_Y+1,STR_mW);
+      }
+      else
+      {
+        lcdDrawNumberNAtt(VBATT_X+1, VBATTUNIT_Y+1, RFPowerOut/10, CONDENSED|PREC2);
+        lcdDrawText(VBATT_X+1,VBATTUNIT_Y+1,STR_mW+1);
+      }
+
       lcdDrawFilledRect(VBATT_X-26, VBATTUNIT_Y, 39, 9);
     }
 #endif
 #else
-#if defined(SPIMODULES)
-  if (!IS_SPIMODULES_PROTOCOL(g_model.rfProtocol) || (IS_SPIMODULES_PROTOCOL(g_model.rfProtocol) && DOUBLE_BLINK_ON_PHASE))
-    {
+#if defined(SPIMODULES) || (SERIAL_PROTOCOL==CRSF)
+ if ((IS_CRSF_PROTOCOL(g_model.rfProtocol) && DOUBLE_BLINK_ON_PHASE) || (IS_SPIMODULES_PROTOCOL(g_model.rfProtocol) && DOUBLE_BLINK_ON_PHASE))
 #endif
       LcdFlags att = (IS_TXBATT_WARNING() ? BLINK|INVERS : 0) | DBLSIZE;
       putsVBat(VBATT_X-1, VBATT_Y, att|NO_UNIT);
       lcdDrawChar(VBATT_X, VBATTUNIT_Y, 'V');
-#if defined(SPIMODULES)
+#if defined(SPIMODULES) || (SERIAL_PROTOCOL==CRSF)
     }
   else
     {
-      lcdDrawNumberNAtt(VBATT_X, VBATTUNIT_Y, RFPowerOut, CONDENSED|PREC2);
-      lcdDrawText(VBATT_X,VBATTUNIT_Y,STR_mW);
+      if (RFPowerOut < 1000)
+      {
+        lcdDrawNumberNAtt(VBATT_X, VBATTUNIT_Y, RFPowerOut*100, CONDENSED|PREC2);
+        lcdDrawText(VBATT_X,VBATTUNIT_Y,STR_mW);
+      }
+      else
+      {
+        lcdDrawNumberNAtt(VBATT_X, VBATTUNIT_Y, RFPowerOut/10, CONDENSED|PREC2);
+        lcdDrawText(VBATT_X,VBATTUNIT_Y,STR_mW+1);
+      }
     }
 #endif
 #endif
@@ -356,7 +372,7 @@ void menuMainView(uint8_t event)
     lcdDrawSizedTextAtt(PHASE_X, PHASE_Y, g_model.flightModeData[mode].name, sizeof(g_model.flightModeData[mode].name), ZCHAR|PHASE_FLAGS);
 
     // Model Name
-#if (SERIAL_PROTOCOL==MULTIMODULE) || defined(SPIMODULES)
+#if (SERIAL_PROTOCOL==MULTIMODULE) || defined(SPIMODULES) || (SERIAL_PROTOCOL==CRSF)
     if ((systemBolls.protoMode == BIND_MODE) && !BLINK_ON_PHASE)
     {
       lcdDrawTextAtt(MODELNAME_X, MODELNAME_Y, STR_BIND, BLINK|DBLSIZE);
