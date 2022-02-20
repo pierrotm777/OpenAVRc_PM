@@ -104,6 +104,7 @@ const long CompilerOptionsFrame::ID_STATICBOX3 = wxNewId();
 const long CompilerOptionsFrame::ID_STATICBOX1 = wxNewId();
 const long CompilerOptionsFrame::ID_STATICBOX9 = wxNewId();
 const long CompilerOptionsFrame::ID_CHOICECC2500PAG = wxNewId();
+const long CompilerOptionsFrame::ID_CHOICESX1276PAG = wxNewId();
 const long CompilerOptionsFrame::ID_CHOICEA7105PAG = wxNewId();
 const long CompilerOptionsFrame::ID_CHOICENRF24l01PAG = wxNewId();
 const long CompilerOptionsFrame::ID_CHECKBOXNOANDSECONDE = wxNewId();
@@ -301,7 +302,8 @@ CompilerOptionsFrame::CompilerOptionsFrame(wxWindow* parent,wxWindowID id,const 
   StaticBox1 = new wxStaticBox(Panel3, ID_STATICBOX1, _("Protocole"), wxPoint(8,8), wxSize(152,328), 0, _T("ID_STATICBOX1"));
   StaticBox9 = new wxStaticBox(Panel3, ID_STATICBOX9, _("SPI Xmitters"), wxPoint(16,112), wxSize(136,216), 0, _T("ID_STATICBOX9"));
   ChoiceCC2500PAG = new wxChoice(Panel3, ID_CHOICECC2500PAG, wxPoint(96,166), wxSize(45,24), 0, 0, 0, wxDefaultValidator, _T("ID_CHOICECC2500PAG"));
-  ChoiceA7105PAG = new wxChoice(Panel3, ID_CHOICEA7105PAG, wxPoint(96,262), wxSize(45,24), 0, 0, 0, wxDefaultValidator, _T("ID_CHOICEA7105PAG"));
+  ChoiceSX1276PAG = new wxChoice(Panel3, ID_CHOICESX1276PAG, wxPoint(96,296), wxSize(45,24), 0, 0, 0, wxDefaultValidator, _T("ID_CHOICESX1276PAG"));
+  ChoiceA7105PAG = new wxChoice(Panel3, ID_CHOICEA7105PAG, wxPoint(96,264), wxSize(45,24), 0, 0, 0, wxDefaultValidator, _T("ID_CHOICEA7105PAG"));
   ChoiceNRF24l01PAG = new wxChoice(Panel3, ID_CHOICENRF24l01PAG, wxPoint(96,230), wxSize(45,24), 0, 0, 0, wxDefaultValidator, _T("ID_CHOICENRF24l01PAG"));
   CheckBoxNOANDSECONDE = new wxCheckBox(Panel3, ID_CHECKBOXNOANDSECONDE, _("NOANDSECONDE"), wxPoint(312,160), wxSize(144,24), 0, wxDefaultValidator, _T("ID_CHECKBOXNOANDSECONDE"));
   CheckBoxNOANDSECONDE->SetValue(false);
@@ -366,8 +368,6 @@ CompilerOptionsFrame::CompilerOptionsFrame(wxWindow* parent,wxWindowID id,const 
   CheckBoxNRF24l01->SetValue(false);
   CheckBoxSX1276 = new wxCheckBox(Panel3, ID_CHECKBOX35, _("SX1276"), wxPoint(24,294), wxSize(72,24), 0, wxDefaultValidator, _T("ID_CHECKBOX35"));
   CheckBoxSX1276->SetValue(false);
-  CheckBoxSX1276->Disable();
-  CheckBoxSX1276->Hide();
   CheckBoxA7105 = new wxCheckBox(Panel3, ID_CHECKBOX29, _("A7105"), wxPoint(24,262), wxSize(72,24), 0, wxDefaultValidator, _T("ID_CHECKBOX29"));
   CheckBoxA7105->SetValue(false);
   ChoiceCYRF6936PAG = new wxChoice(Panel3, ID_CHOICECYRF6936PAG, wxPoint(96,198), wxSize(45,24), 0, 0, 0, wxDefaultValidator, _T("ID_CHOICECYRF6936PAG"));
@@ -377,7 +377,7 @@ CompilerOptionsFrame::CompilerOptionsFrame(wxWindow* parent,wxWindowID id,const 
   CheckBoxXMODEM->SetToolTip(_("Transfert de données"));
   ChoiceBLUETOOTH = new wxChoice(Panel3, ID_CHOICEBLUETOOTH, wxPoint(392,224), wxSize(56,23), 0, 0, 0, wxDefaultValidator, _T("ID_CHOICEBLUETOOTH"));
   StaticText30 = new wxStaticText(Panel3, ID_STATICTEXT30, _("BLUETOOTH"), wxPoint(312,230), wxDefaultSize, 0, _T("ID_STATICTEXT30"));
-  ChoiceSERIAL_PROTOCOL = new wxChoice(Panel3, ID_PROTOSERIALCHOICE, wxPoint(40,80), wxSize(96,23), 0, 0, 0, wxDefaultValidator, _T("ID_PROTOSERIALCHOICE"));
+  ChoiceSERIAL_PROTOCOL = new wxChoice(Panel3, ID_PROTOSERIALCHOICE, wxPoint(24,80), wxSize(112,23), 0, 0, 0, wxDefaultValidator, _T("ID_PROTOSERIALCHOICE"));
   StaticText31 = new wxStaticText(Panel3, ID_STATICTEXT31, _("Protocole Série"), wxPoint(32,60), wxDefaultSize, 0, _T("ID_STATICTEXT31"));
   Panel4 = new wxPanel(Notebook1, ID_PANEL4, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, _T("ID_PANEL4"));
   StaticBox7 = new wxStaticBox(Panel4, ID_STATICBOX7, _("Nom des interrupteurs"), wxPoint(8,8), wxSize(504,328), 0, _T("ID_STATICBOX7"));
@@ -501,6 +501,7 @@ CompilerOptionsFrame::CompilerOptionsFrame(wxWindow* parent,wxWindowID id,const 
   ChoicePPM_UNIT ->Append("US");
 
   ChoicePCB->SetSelection( ChoicePCB->Append("MEGAMINI") );
+  ChoicePCB->Append("MEGA2560");
 
   ChoiceLCD->SetSelection( ChoiceLCD->Append("KS108") );
   ChoiceLCD->Append("ST7565P");
@@ -582,9 +583,12 @@ CompilerOptionsFrame::CompilerOptionsFrame(wxWindow* parent,wxWindowID id,const 
   ChoiceCYRF6936PAG->SetSelection( ChoiceCYRF6936PAG->Append("20") );
   ChoiceCYRF6936PAG->Append("22");
 
+  ChoiceSX1276PAG->SetSelection( ChoiceSX1276PAG->Append("14") );
+  ChoiceSX1276PAG->Append("20");
+
   ChoiceBLUETOOTH->SetSelection( ChoiceBLUETOOTH->Append("NO") );
   ChoiceBLUETOOTH->Append("HC05");
-  //ChoiceBLUETOOTH->Append("HM10"); todo add hm10
+  ChoiceBLUETOOTH->Append("HM10"); //todo add hm10
 
   ChoiceNUMXANY->SetSelection( ChoiceNUMXANY->Append("NO") );
   ChoiceNUMXANY->Append("1");
@@ -598,6 +602,7 @@ CompilerOptionsFrame::CompilerOptionsFrame(wxWindow* parent,wxWindowID id,const 
   ChoiceSERIAL_PROTOCOL->Append("CRSF");
   ChoiceSERIAL_PROTOCOL->Append("SBUS");
   ChoiceSERIAL_PROTOCOL->Append("SUMD");
+
 ///////////////////////// End of avoid compilation option translation ///////////////////
 
   ChoicePCB->SetStringSelection(PCB);
@@ -625,6 +630,7 @@ CompilerOptionsFrame::CompilerOptionsFrame(wxWindow* parent,wxWindowID id,const 
   ChoiceCYRF6936PAG->SetStringSelection(CYRF6936PAG);
   ChoiceNRF24l01PAG->SetStringSelection(NRF24l01PAG);
   ChoiceA7105PAG->SetStringSelection(A7105PAG);
+  ChoiceSX1276PAG->SetStringSelection(SX1276PAG);
   CheckBoxSD_CARD->SetValue(SD_CARD);
   CheckBoxTEMPLATES->SetValue(TEMPLATES);
   ChoiceTHREE_POS->SetStringSelection(THREE_POS);
@@ -763,6 +769,7 @@ void CompilerOptionsFrame::BatFunction()
       if (SX1276)
         {
           CompiBat += (" SX1276=YES");// default should be NO
+          CompiBat += (" SX1276PAG=" + SX1276PAG);
         }
     }
   if (SD_CARD)
@@ -849,11 +856,12 @@ void CompilerOptionsFrame::CollectDatas()
   CYRF6936 = CheckBoxCYRF6936->GetValue();
   NRF24l01 = CheckBoxNRF24l01->GetValue();
   A7105 = CheckBoxA7105->GetValue();
+  SX1276 = CheckBoxSX1276->GetValue();
   CC2500PAG = ChoiceCC2500PAG->GetString(ChoiceCC2500PAG->GetSelection());
   CYRF6936PAG = ChoiceCYRF6936PAG->GetString(ChoiceCYRF6936PAG->GetSelection());
   NRF24l01PAG = ChoiceNRF24l01PAG->GetString(ChoiceNRF24l01PAG->GetSelection());
   A7105PAG = ChoiceA7105PAG->GetString(ChoiceA7105PAG->GetSelection());
-  SX1276 = CheckBoxSX1276->GetValue();
+  SX1276PAG = ChoiceSX1276PAG->GetString(ChoiceSX1276PAG->GetSelection());
 
   SD_CARD = CheckBoxSD_CARD->GetValue();
   TEMPLATES = CheckBoxTEMPLATES->GetValue();

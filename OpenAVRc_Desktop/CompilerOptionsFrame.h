@@ -85,6 +85,7 @@ extern wxString CC2500PAG;//defaults to 0
 extern wxString CYRF6936PAG;//defaults to 0
 extern wxString NRF24l01PAG;//defaults to 0
 extern wxString A7105PAG;//defaults to 0
+extern wxString SX1276PAG;//defaults to 0
 
 extern bool SD_CARD;//defaults to NO
 extern bool FAS_OFFSET;//defaults to NO
@@ -209,6 +210,7 @@ public:
     wxCheckBox* CheckBoxWS_HOW_HIGH;
     wxCheckBox* CheckBoxXMODEM;
     wxChoice* ChoiceA7105PAG;
+    wxChoice* ChoiceSX1276PAG;
     wxChoice* ChoiceBLUETOOTH;
     wxChoice* ChoiceCC2500PAG;
     wxChoice* ChoiceCYRF6936PAG;
@@ -352,6 +354,7 @@ protected:
     static const long ID_STATICBOX1;
     static const long ID_STATICBOX9;
     static const long ID_CHOICECC2500PAG;
+    static const long ID_CHOICESX1276PAG;
     static const long ID_CHOICEA7105PAG;
     static const long ID_CHOICENRF24l01PAG;
     static const long ID_CHECKBOXNOANDSECONDE;

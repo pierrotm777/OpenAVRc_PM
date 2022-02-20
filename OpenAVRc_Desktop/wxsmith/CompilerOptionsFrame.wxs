@@ -327,9 +327,14 @@
 							<pos>96,166</pos>
 							<size>45,24</size>
 						</object>
+						<object class="wxChoice" name="ID_CHOICESX1276PAG" variable="ChoiceSX1276PAG" member="yes">
+							<selection>0</selection>
+							<pos>96,296</pos>
+							<size>45,24</size>
+						</object>
 						<object class="wxChoice" name="ID_CHOICEA7105PAG" variable="ChoiceA7105PAG" member="yes">
 							<selection>0</selection>
-							<pos>96,262</pos>
+							<pos>96,264</pos>
 							<size>45,24</size>
 						</object>
 						<object class="wxChoice" name="ID_CHOICENRF24l01PAG" variable="ChoiceNRF24l01PAG" member="yes">
@@ -491,8 +496,6 @@
 							<label>SX1276</label>
 							<pos>24,294</pos>
 							<size>72,24</size>
-							<enabled>0</enabled>
-							<hidden>1</hidden>
 							<handler function="OnCheckBoxPERSONAMESClick" entry="EVT_CHECKBOX" />
 						</object>
 						<object class="wxCheckBox" name="ID_CHECKBOX29" variable="CheckBoxA7105" member="yes">
@@ -530,8 +533,8 @@
 						</object>
 						<object class="wxChoice" name="ID_PROTOSERIALCHOICE" variable="ChoiceSERIAL_PROTOCOL" member="yes">
 							<selection>0</selection>
-							<pos>40,80</pos>
-							<size>96,23</size>
+							<pos>24,80</pos>
+							<size>112,23</size>
 						</object>
 						<object class="wxStaticText" name="ID_STATICTEXT31" variable="StaticText31" member="yes">
 							<label>Protocole Série</label>

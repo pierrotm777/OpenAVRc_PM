@@ -144,6 +144,7 @@ wxString CC2500PAG = ("0");
 wxString CYRF6936PAG = ("0");
 wxString NRF24l01PAG = ("0");
 wxString A7105PAG = ("0");
+wxString SX1276PAG = ("0");
 bool SD_CARD = 0;
 bool TEMPLATES = 0;
 wxString THREE_POS = ("NO");
@@ -667,6 +668,7 @@ void OpenAVRc_DesktopFrame::LoadConfig(wxString temp)
   configFile->Read(wxT("CYRF6936PAG"),&CYRF6936PAG);
   configFile->Read(wxT("NRF24l01PAG"),&NRF24l01PAG);
   configFile->Read(wxT("A7105PAG"),&A7105PAG);
+  configFile->Read(wxT("SX1276PAG"),&SX1276PAG);
   configFile->Read(wxT("SD_CARD"),&SD_CARD);
   configFile->Read(wxT("TEMPLATES"),&TEMPLATES);
   configFile->Read(wxT("THREE_POS"),&THREE_POS);
@@ -798,6 +800,7 @@ extern void OpenAVRc_DesktopFrame::SaveConfig()
   configFile->Write(wxT("CYRF6936PAG"),CYRF6936PAG);
   configFile->Write(wxT("NRF24l01PAG"),NRF24l01PAG);
   configFile->Write(wxT("A7105PAG"),A7105PAG);
+  configFile->Write(wxT("SX1276PAG"),SX1276PAG);
   configFile->Write(wxT("SD_CARD"),SD_CARD);
   configFile->Write(wxT("TEMPLATES"),TEMPLATES);
   configFile->Write(wxT("THREE_POS"),THREE_POS);
