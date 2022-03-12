@@ -168,6 +168,9 @@ void displayBattVoltage()
 #if defined(SPIMODULES)
   if (!IS_SPIMODULES_PROTOCOL(g_model.rfProtocol) || (IS_SPIMODULES_PROTOCOL(g_model.rfProtocol) && DOUBLE_BLINK_ON_PHASE))
     {
+#elif (SERIAL_PROTOCOL==CRSF)
+  if (!IS_CRSF_PROTOCOL(g_model.rfProtocol) || (IS_CRSF_PROTOCOL(g_model.rfProtocol) && DOUBLE_BLINK_ON_PHASE))
+    {
 #endif
       lcdDrawFilledRect(VBATT_X-25, VBATT_Y+9, 21, 5);
       lcdDrawSolidVerticalLine(VBATT_X-4, VBATT_Y+10, 3);
@@ -176,7 +179,7 @@ void displayBattVoltage()
         lcdDrawSolidVerticalLine(VBATT_X-24+i, VBATT_Y+10, 3);
       if (!IS_TXBATT_WARNING() || BLINK_ON_PHASE)
         lcdDrawFilledRect(VBATT_X-26, VBATT_Y, 24, 15);
-#if defined(SPIMODULES)
+#if defined(SPIMODULES) || (SERIAL_PROTOCOL==CRSF)
     }
   else
     {
@@ -190,14 +193,18 @@ void displayBattVoltage()
 #if defined(SPIMODULES)
   if (!IS_SPIMODULES_PROTOCOL(g_model.rfProtocol) || (IS_SPIMODULES_PROTOCOL(g_model.rfProtocol) && DOUBLE_BLINK_ON_PHASE))
     {
+#elif (SERIAL_PROTOCOL==CRSF)
+  if (!IS_CRSF_PROTOCOL(g_model.rfProtocol) || (IS_CRSF_PROTOCOL(g_model.rfProtocol) && DOUBLE_BLINK_ON_PHASE))
+    {
 #endif
       LcdFlags att = (IS_TXBATT_WARNING() ? BLINK|INVERS : 0) | DBLSIZE;
       putsVBat(VBATT_X-1, VBATT_Y, att|NO_UNIT);
       lcdDrawChar(VBATT_X, VBATTUNIT_Y, 'V');
-#if defined(SPIMODULES)
+#if defined(SPIMODULES) || (SERIAL_PROTOCOL==CRSF)
     }
   else
     {
+
       lcdDrawNumberNAtt(VBATT_X, VBATTUNIT_Y, RFPowerOut, CONDENSED|PREC2);
       lcdDrawText(VBATT_X,VBATTUNIT_Y,STR_mW);
     }
@@ -223,6 +230,7 @@ void onMainViewMenu(const char *result)
     timerReset(1);
   }
   else if (result == STR_SAVE_TIMERS) {
+    //saveTimers();
     OpenAVRcClose();
   }
 #if defined(FRSKY)
@@ -345,14 +353,17 @@ void menuMainView(uint8_t event)
           POPUP_CONFIRMATION(STR_POWEROFF);
           killEvents(event);
     break;
+
+
   }
+
   {
     // Flight Mode Name
     uint8_t mode = mixerCurrentFlightMode;
     lcdDrawSizedTextAtt(PHASE_X, PHASE_Y, g_model.flightModeData[mode].name, sizeof(g_model.flightModeData[mode].name), ZCHAR|PHASE_FLAGS);
 
     // Model Name
-#if (SERIAL_PROTOCOL==MULTIMODULE) || defined(SPIMODULES)
+#if (SERIAL_PROTOCOL==MULTIMODULE) || defined(SPIMODULES) || (SERIAL_PROTOCOL==CRSF)
     if ((systemBolls.protoMode == BIND_MODE) && !BLINK_ON_PHASE)
     {
       lcdDrawTextAtt(MODELNAME_X, MODELNAME_Y, STR_BIND, BLINK|DBLSIZE);
