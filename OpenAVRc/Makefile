@@ -202,6 +202,10 @@ GVARS = NO
 # Values = NO, YES with personames.h edited
 PERSONAMES = NO
 
+# Show a bouble vertical stick (For boats, tanks, ...)
+# Values = NO, YES
+DBLGAZSTICK = NO
+
 # Allow to add extra compilation option
 # Values = NO, ....
 OTHERCOMPOPTIONS = NO
@@ -452,7 +456,7 @@ ifeq ($(PCB), MEGAMINI)
  	  	CPPDEFS += -DA7105PA_GAIN=$(A7105PAG)
   	endif
 
-  	ifeq ($(A7105), YES)
+  	ifeq ($(SX1276), YES)
    		CPPDEFS += -DPROTO_HAS_SX1276
  	  	CPPDEFS += -DA7105PA_GAIN=$(SX1276PAG)
   	endif
@@ -1069,8 +1073,12 @@ ifeq ($(3POS), POT3)
   CPPDEFS += -DEXTRA_3POS=3
 endif
 
+ifneq ($(DBLGAZSTICK), NO)
+  CPPDEFS += -DDBLGAZSTICK
+endif
+
 ifneq ($(OTHERCOMPOPTIONS), NO)
-  CPPDEFS += ($(OTHERCOMPOPTIONS)
+  CPPDEFS += $(subst *, ,$(OTHERCOMPOPTIONS))
 endif
 
 #---------------- Compiler Options C++ ----------------
@@ -1117,8 +1125,6 @@ CPPFLAGS += -DFLAVOUR=\"$(FLAVOUR)\"
 AVRCPPFLAGS = -mmcu=$(MCU) -I. -x c++ -O$(OPT) $(CPPFLAGS) $(INCFLAGS) $(GENDEPFLAGS) -fwhole-program -mstrict-X
 
 
-MAJ_VER = ${shell sh -c "grep \"MAJ_VERS\" OpenAVRc.h | cut -d\  -f3 | egrep -o \"[[:digit:]]\""}
-MIN_VER = ${shell sh -c "grep \"MIN_VERS\" OpenAVRc.h | cut -d\  -f3"}
 
 .SECONDARY:
 

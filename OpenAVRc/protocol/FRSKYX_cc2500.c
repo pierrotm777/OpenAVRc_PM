@@ -35,13 +35,14 @@
 
 #include "../OpenAVRc.h"
 
-#define LBTMODE    (g_model.rfSubType == 0)
+#define LBTMODE    (g_model.rfSubType == 1)
 #define XTELEMETRY (g_model.rfOptionBool1)
 #define X8MODE     (g_model.rfOptionBool2)
+#define VERSIONMODE (g_model.rfOptionBool3)
 
 const static RfOptionSettingsvar_t RfOpt_FrskyX_Ser[] PROGMEM =
 {
-  /*rfProtoNeed*/PROTO_NEED_SPI | BOOL1USED | BOOL2USED, //can be PROTO_NEED_SPI | BOOL1USED | BOOL2USED | BOOL3USED
+  /*rfProtoNeed*/PROTO_NEED_SPI | BOOL1USED | BOOL2USED | BOOL3USED, //can be PROTO_NEED_SPI | BOOL1USED | BOOL2USED | BOOL3USED
   /*rfSubTypeMax*/1,
   /*rfOptionValue1Min*/-128, // FREQFINE MIN
   /*rfOptionValue1Max*/127,  // FREQFINE MAX
@@ -50,8 +51,16 @@ const static RfOptionSettingsvar_t RfOpt_FrskyX_Ser[] PROGMEM =
   /*rfOptionValue3Max*/7,    // RF POWER
 };
 
-const pm_char STR_SUBTYPE_FRSKYX[] PROGMEM = "XLBT""XFCC";
+const pm_char STR_SUBTYPE_FRSKYX[] PROGMEM = "XFCC""XLBT";
 const pm_char STR_X8MODE[] PROGMEM = INDENT "X8-9mS";
+const pm_char STR_VERSIONMODE[] PROGMEM = INDENT "FrskyX-V2";
+
+#define TELEM_PKT_SIZE            17
+#define HOP_DATA_SIZE             48
+#define MAX_PACKET_SIZE  33
+
+static uint8_t calDataV1V2[48][3];
+static uint8_t packet_size;
 
 enum
 {
@@ -61,6 +70,38 @@ enum
   FRSKYX_DATA4,
   FRSKYX_DATA5,
 };
+
+static uint16_t fixed_id;
+static uint8_t packet[MAX_PACKET_SIZE];
+static uint8_t hop_data_v2[HOP_DATA_SIZE];
+
+static void init_hop_FRSkyX2(void)
+{
+    uint8_t inc = (fixed_id % (HOP_DATA_SIZE - 2)) + 1;              // Increment
+    if ( inc == 12 || inc == 35 ) inc++;                        // Exception list from dumps
+    uint8_t offset = fixed_id % 5;                                   // Start offset
+
+    uint8_t channel;
+    for (uint8_t i = 0; i < (HOP_DATA_SIZE - 1); i++)
+    {
+        channel = 5 * ((uint16_t)(inc * i) % (HOP_DATA_SIZE - 1)) + offset;
+        // Exception list from dumps
+        //if (Model.proto_opts[PROTO_OPTS_FORMAT]) {              // LBT or FCC
+        if (g_model.rfSubType) {              // LBT or FCC
+            // LBT
+            if (channel <= 1 || channel == 43 || channel == 44 || channel == 87 || channel == 88 || channel == 129 || channel == 130 || channel == 173 || channel == 174)
+                channel += 2;
+            else if (channel == 216 || channel == 217 || channel == 218)
+                channel += 3;
+        } else {
+            // FCC
+            if (channel == 3 || channel == 4 || channel == 46 || channel == 47 || channel == 90 || channel == 91  || channel == 133 || channel == 134 || channel == 176 || channel == 177 || channel == 220 || channel == 221)
+                channel += 2;
+        }
+        hop_data_v2[i] = channel;                               // Store
+    }
+    hop_data_v2[HOP_DATA_SIZE - 1] = 0;                                        // Bind freq
+}
 
 // FCC,       EU  ,
 static const uint8_t ZZ_FRSKYX_InitData_Start[] PROGMEM =
@@ -86,7 +127,7 @@ static const uint8_t ZZ_FRSKYX_InitData_Start[] PROGMEM =
   CC2500_15_DEVIATN, 0x51,       0x53
 };
 
-static void FRSKYX_init()
+static void FRSKYX_init()//V1 reste OK
 {
   channel_offset_p2M = 0;
 
@@ -103,24 +144,54 @@ static void FRSKYX_init()
       LBTMODE ? ++pdata : pdata+=2;
     }
 
-  FRSKY_Init_Common_End();
+  if (VERSIONMODE) {
+      CC2500_WriteReg(CC2500_08_PKTCTRL0, 0x05);     // Enable CRC
+      if (!g_model.rfSubType) {    // FCC
+          CC2500_WriteReg(CC2500_17_MCSM1, 0x0E);    // Go/Stay in RX mode
+          CC2500_WriteReg(CC2500_11_MDMCFG3, 0x84);  // bitrate 70K->77K
+      }
+  }
+  else
+  {
+    FRSKY_Init_Common_End();
+  }
 
   CC2500_ManageFreq();
   CC2500_SetPower(TXPOWER_1);
 
-  //calibrate hop channels
-  for (uint8_t c = 0; c < 48; c++)
-    {
+  // calibrate hop channels
+  for (uint8_t c = 0; c < 48; c++) {
       CC2500_Strobe(CC2500_SIDLE);
-      CC2500_WriteReg(CC2500_0A_CHANNR, channel_used_p2M[c]);
+      //if (!Model.proto_opts[PROTO_OPTS_VERSION]) {
+      if (!VERSIONMODE) {
+          CC2500_WriteReg(CC2500_0A_CHANNR, channel_used_p2M[c]);
+      } else {
+          init_hop_FRSkyX2();
+          CC2500_WriteReg(CC2500_0A_CHANNR, hop_data_v2[c]);
+      }
       CC2500_Strobe(CC2500_SCAL);
       _delay_us(900);
-      calData[c] = CC2500_ReadReg(CC2500_25_FSCAL1); // VCO capacitance calibration
-    }
-
-  CC2500_Strobe(CC2500_SFTX); // 3b
-  CC2500_Strobe(CC2500_SFRX); // 3a
-  CC2500_Strobe(CC2500_SIDLE); // Go to idle...
+      if (VERSIONMODE) {
+        calDataV1V2[c][0] = CC2500_ReadReg(CC2500_23_FSCAL3);
+        calDataV1V2[c][1] = CC2500_ReadReg(CC2500_24_FSCAL2);
+      }
+      calData[c] = CC2500_ReadReg(CC2500_25_FSCAL1);// VCO capacitance calibration
+  }
+  if (VERSIONMODE) {
+    CC2500_Strobe(CC2500_SIDLE);
+    CC2500_WriteReg(CC2500_0A_CHANNR, 0x00);
+    CC2500_Strobe(CC2500_SCAL);
+    _delay_us(900);
+    calDataV1V2[HOP_DATA_SIZE - 1][0] = CC2500_ReadReg(CC2500_23_FSCAL3);
+    calDataV1V2[HOP_DATA_SIZE - 1][1] = CC2500_ReadReg(CC2500_24_FSCAL2);
+    calDataV1V2[HOP_DATA_SIZE - 1][2] = CC2500_ReadReg(CC2500_25_FSCAL1);
+  }
+  else
+  {
+    CC2500_Strobe(CC2500_SFTX); // 3b
+    CC2500_Strobe(CC2500_SFRX); // 3a
+    CC2500_Strobe(CC2500_SIDLE); // Go to idle...
+  }
 }
 
 static uint16_t Xcrc(uint8_t *data, uint8_t len)
@@ -167,9 +238,13 @@ static uint16_t Xcrc(uint8_t *data, uint8_t len)
   return crc;
 }
 
-static void FRSKYX_initialize_data(uint8_t adr)
+static void FRSKYX_initialize_data(uint8_t adr)//V1 reste OK
 {
-  CC2500_WriteReg(CC2500_18_MCSM0,0x08);
+  if(VERSIONMODE)
+  {
+      CC2500_WriteReg(CC2500_0C_FSCTRL0, g_model.rfOptionValue1); // Frequency offset hack
+  }
+  CC2500_WriteReg(CC2500_18_MCSM0,    0x8);
   CC2500_WriteReg(CC2500_09_ADDR, adr ? 0x03 : temp_rfid_addr_p2M[3]);
   CC2500_WriteReg(CC2500_07_PKTCTRL1,0x05);
 }
@@ -177,33 +252,80 @@ static void FRSKYX_initialize_data(uint8_t adr)
 static void frskyX_set_start(uint8_t ch)
 {
   CC2500_Strobe(CC2500_SIDLE);
-  CC2500_WriteReg(CC2500_25_FSCAL1, calData[ch]);
-  CC2500_WriteReg(CC2500_0A_CHANNR, channel_used_p2M[ch]);
+  if (!VERSIONMODE)
+  {
+    CC2500_WriteReg(CC2500_25_FSCAL1, calData[ch]);
+    CC2500_WriteReg(CC2500_0A_CHANNR, channel_used_p2M[ch]);
+  }
+  else
+  {
+    CC2500_WriteReg(CC2500_23_FSCAL3, calDataV1V2[ch][0]);
+    CC2500_WriteReg(CC2500_24_FSCAL2, calDataV1V2[ch][1]);
+    CC2500_WriteReg(CC2500_25_FSCAL1, calDataV1V2[ch][2]);
+    CC2500_WriteReg(CC2500_0A_CHANNR, hop_data_v2[ch]);
+  }
 }
 
-static void frskyX_build_bind_packet()
+static void frskyX_build_bind_packet()//V1 reste OK
 {
-  packet_p2M[0] = LBTMODE ? 0x20 : 0x1D; // LBT (EU) or  FCC (US)
-  packet_p2M[1] = 0x03;
-  packet_p2M[2] = 0x01;
-  packet_p2M[3] = temp_rfid_addr_p2M[3];
-  packet_p2M[4] = temp_rfid_addr_p2M[2];
-  packet_p2M[5] = bind_idx_p2M; // Index into channels_used array.
-  packet_p2M[6] =  channel_used_p2M[bind_idx_p2M++];
-  packet_p2M[7] =  channel_used_p2M[bind_idx_p2M++];
-  packet_p2M[8] =  channel_used_p2M[bind_idx_p2M++];
-  packet_p2M[9] =  channel_used_p2M[bind_idx_p2M++];
-  packet_p2M[10] = channel_used_p2M[bind_idx_p2M++];
-  packet_p2M[11] = 0x02;
-  packet_p2M[12] = RXNUM;
+    packet_p2M[0] = LBTMODE ? 0x20 : 0x1D; // LBT (EU) or  FCC (US)//packet_size;                // Number of bytes in the packet (after this one)
+    packet_p2M[1] = 0x03;                       // Bind packet
+    packet[2] = 0x01;                       // Bind packet
 
-  uint8_t end_packet = LBTMODE ? 31 : 28 ;
-  memset(&packet_p2M[13], 0, end_packet - 13);
-  uint16_t lcrc = Xcrc(&packet_p2M[3], end_packet-3);
-  packet_p2M[end_packet++] = lcrc >> 8;
-  packet_p2M[end_packet] = lcrc;
-  if(bind_idx_p2M > 49)
-    bind_idx_p2M = 0;
+    packet_p2M[3] = temp_rfid_addr_p2M[3];
+    packet_p2M[4] = temp_rfid_addr_p2M[2];
+
+    //if (!Model.proto_opts[PROTO_OPTS_VERSION]) {
+    if (!VERSIONMODE) {//V1
+        packet_p2M[5] = bind_idx_p2M; // Index into channels_used array.
+        packet_p2M[6] =  channel_used_p2M[bind_idx_p2M++];
+        packet_p2M[7] =  channel_used_p2M[bind_idx_p2M++];
+        packet_p2M[8] =  channel_used_p2M[bind_idx_p2M++];
+        packet_p2M[9] =  channel_used_p2M[bind_idx_p2M++];
+        packet_p2M[10] = channel_used_p2M[bind_idx_p2M++];
+        packet_p2M[11] = 0x02;
+        packet_p2M[12] = RXNUM;
+
+        uint8_t end_packet = LBTMODE ? 31 : 28 ;
+        memset(&packet_p2M[13], 0, end_packet - 13);
+
+        uint16_t lcrc = Xcrc(&packet_p2M[3], end_packet-3);
+        packet_p2M[end_packet++] = lcrc >> 8;
+        packet_p2M[end_packet] = lcrc;
+
+        if(bind_idx_p2M > 49)
+          bind_idx_p2M = 0;
+    } else {//V2
+        // packet 1D 03 01 0E 1C 02 00 00 32 0B 00 00 A8 26 28 01 A1 00 00 00 3E F6 87 C7 00 00 00 00 C9 C9
+        // Unknown bytes
+//#ifndef MODULAR
+        if (rfState8_p2M & 0x01)//tient compte de BIND_MODE_DONE=1000; ?
+            memcpy(&packet_p2M[7], "\x00\x18\x0A\x00\x00\xE0\x02\x0B\x01\xD3\x08\x00\x00\x4C\xFE\x87\xC7", 17);
+        else
+            memcpy(&packet_p2M[7], "\x27\xAD\x02\x00\x00\x64\xC8\x46\x00\x64\x00\x00\x00\xFB\xF6\x87\xC7", 17);
+//#else
+//        memcpy(&packet[7], "\x00\x32\x0B\x00\x00\xA8\x26\x28\x01\xA1\x00\x00\x00\x3E\xF6\x87\xC7", 17);
+//#endif
+        packet_p2M[5] = 0x02;                   // ID
+        packet_p2M[6] = RXNUM;
+        // Bind flags
+        if (bind_idx_p2M & 0x01)
+            packet_p2M[7] |= 0x40;              // Telem off
+        if (bind_idx_p2M & 0x02)
+            packet_p2M[7] |= 0x80;              // CH9-16
+        // Unknown bytes
+        packet_p2M[20]^= 0x0E ^ temp_rfid_addr_p2M[3];       // Update the ID
+        packet_p2M[21]^= 0x1C ^ temp_rfid_addr_p2M[2];  // Update the ID
+        // Xor
+        for (uint8_t i = 3; i < packet_size - 1; i++)
+            packet_p2M[i] ^= 0xA7;
+
+        //uint16_t lcrc = crc(&packet[3], packet_size - 4);
+        uint16_t lcrc = Xcrc(&packet_p2M[3], packet_size-4);
+        packet_p2M[packet_size - 1] = lcrc >> 8;
+        packet_p2M[packet_size] = lcrc;
+
+    }
 }
 
 static uint16_t scaleForPXX(uint8_t chan)
@@ -563,7 +685,7 @@ const void *FRSKYX_Cmds(enum ProtoCmds cmd)
                           STR_RFPOWER,     //Option 3 (uint 0 to 31)
                           STR_TELEMETRY,   //OptionBool 1
                           STR_X8MODE,      //OptionBool 2
-                          STR_DUMMY        //OptionBool 3
+                          STR_VERSIONMODE        //OptionBool 3
                          );
       return 0;
     default:
