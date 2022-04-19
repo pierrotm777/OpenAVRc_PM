@@ -139,7 +139,7 @@ static void HOTT_rf_init()
 	for (uint8_t i = 0; i < 39; ++i)
 		CC2500_WriteReg(i, pgm_read_byte_near(&HOTT_init_values[i]));
 
-  /* à remplacer par CC2500_ManageFreq(); */
+
 	CC2500_WriteReg(CC2500_0C_FSCTRL0, g_model.rfOptionValue1);
 
   CC2500_SetTxRxMode(TX_EN);
@@ -160,7 +160,7 @@ static void HOTT_tune_chan_fast()
 	CC2500_WriteReg(CC2500_0A_CHANNR, (rf_ch_num+1)*3);
 	CC2500_WriteReg(CC2500_25_FSCAL1, calData[rf_ch_num]);
 }
-/* remplacé par CC2500_ManageFreq();
+
 static void HOTT_tune_freq()
 {
 	if ( freq_fine_mem_p2M != g_model.rfOptionValue1)//freq_fine_mem_p2M != option
@@ -171,7 +171,7 @@ static void HOTT_tune_freq()
 		rfState8_p2M = HOTT_START;								// Restart the tune process if option is changed to get good tuned values
 	}
 }
-*/
+
 const uint8_t PROGMEM HOTT_hop[][HOTT_NUM_RF_CHANNELS]=
 	{	{ 48, 37, 16, 62, 9, 50, 42, 22, 68, 0, 55, 35, 21, 74, 1, 56, 31, 20, 70, 11, 45, 32, 24, 71, 8, 54, 38, 26, 61, 13, 53, 30, 15, 65, 7, 52, 34, 28, 60, 3, 47, 39, 18, 69, 2, 49, 44, 23, 72, 5, 51, 43, 19, 64, 12, 46, 33, 17, 67, 6, 58, 36, 29, 73, 14, 57, 41, 25, 63, 4, 59, 40, 27, 66, 10 },
 		{ 50, 23, 5, 34, 67, 53, 22, 12, 39, 62, 51, 21, 10, 33, 63, 59, 16, 1, 43, 66, 49, 19, 8, 30, 71, 47, 24, 2, 35, 68, 45, 25, 14, 41, 74, 55, 18, 4, 32, 61, 54, 17, 11, 31, 72, 52, 28, 6, 38, 65, 46, 15, 9, 40, 60, 48, 26, 3, 37, 70, 58, 29, 0, 36, 64, 56, 20, 7, 42, 69, 57, 27, 13, 44, 73 },
@@ -370,7 +370,7 @@ uint16_t HOTT_callback()
 			CC2500_WriteReg(CC2500_04_SYNC1, 0xD3);
 			CC2500_WriteReg(CC2500_05_SYNC0, 0x91);
 			//Set RF freq
-			CC2500_ManageFreq();//HOTT_tune_freq();
+			HOTT_tune_freq();
 			HOTT_tune_chan_fast();
 			//Setup LBT
 			CC2500_WriteReg(CC2500_1B_AGCCTRL2, 0xFF);

@@ -64,6 +64,8 @@ static uint8_t packet_size;
 
 enum
 {
+  //FRSKY_BIND,
+  //FRSKY_BIND_DONE = 1000,
   FRSKYX_DATA1,
   FRSKYX_DATA2,
   FRSKYX_DATA3,
@@ -71,15 +73,36 @@ enum
   FRSKYX_DATA5,
 };
 
-static uint16_t fixed_id;
-static uint8_t packet[MAX_PACKET_SIZE];
+static const uint16_t CRC_ShortV2[] = {
+  0x0000,0x1189,0x2312,0x329b,0x4624,0x57ad,0x6536,0x74bf,
+  0x8c48,0x9dc1,0xaf5a,0xbed3,0xca6c,0xdbe5,0xe97e,0xf8f7,
+};
+
+static uint16_t crcTableV2(uint8_t val)
+{
+  uint16_t word;
+  word = pgm_read_word(&CRC_ShortV2[val & 0x0F]);
+  val /= 16;
+  return word ^ (0x1081 * val);
+}
+
+static uint16_t crc(uint8_t *data, uint8_t len) {
+  uint16_t crc = 0;
+  for (int i = 0; i < len; i++)
+      crc = (crc << 8) ^ crcTableV2((uint8_t)(crc >> 8) ^ *data++);
+  return crc;
+}
+
+
+//static uint16_t fixed_id;
+//static uint8_t packet[MAX_PACKET_SIZE];
 static uint8_t hop_data_v2[HOP_DATA_SIZE];
 
 static void init_hop_FRSkyX2(void)
 {
-    uint8_t inc = (fixed_id % (HOP_DATA_SIZE - 2)) + 1;              // Increment
+    uint8_t inc = (temp_rfid_addr_p2M[3] % (HOP_DATA_SIZE - 2)) + 1;              // Increment
     if ( inc == 12 || inc == 35 ) inc++;                        // Exception list from dumps
-    uint8_t offset = fixed_id % 5;                                   // Start offset
+    uint8_t offset = temp_rfid_addr_p2M[3] % 5;                                   // Start offset
 
     uint8_t channel;
     for (uint8_t i = 0; i < (HOP_DATA_SIZE - 1); i++)
@@ -270,7 +293,7 @@ static void frskyX_build_bind_packet()//V1 reste OK
 {
     packet_p2M[0] = LBTMODE ? 0x20 : 0x1D; // LBT (EU) or  FCC (US)//packet_size;                // Number of bytes in the packet (after this one)
     packet_p2M[1] = 0x03;                       // Bind packet
-    packet[2] = 0x01;                       // Bind packet
+    packet_p2M[2] = 0x01;                       // Bind packet
 
     packet_p2M[3] = temp_rfid_addr_p2M[3];
     packet_p2M[4] = temp_rfid_addr_p2M[2];
@@ -320,8 +343,8 @@ static void frskyX_build_bind_packet()//V1 reste OK
         for (uint8_t i = 3; i < packet_size - 1; i++)
             packet_p2M[i] ^= 0xA7;
 
-        //uint16_t lcrc = crc(&packet[3], packet_size - 4);
-        uint16_t lcrc = Xcrc(&packet_p2M[3], packet_size-4);
+        uint16_t lcrc = crc(&packet_p2M[3], packet_size - 4);
+        //uint16_t lcrc = Xcrc(&packet_p2M[3], packet_size-3);
         packet_p2M[packet_size - 1] = lcrc >> 8;
         packet_p2M[packet_size] = lcrc;
 
@@ -552,6 +575,23 @@ static uint16_t FRSKYX_send_data_packet()
 {
   switch(rfState8_p2M)
     {
+/*
+    default:
+      frskyX_set_start(47);
+      CC2500_SetPower(g_model.rfOptionValue3);
+      CC2500_Strobe(CC2500_SFRX);
+      frskyX_build_bind_packet();
+      CC2500_Strobe(CC2500_SIDLE);
+      CC2500_WriteData(packet_p2M, packet_p2M[0] + 1);
+      rfState8_p2M++;
+      return 9000*2;
+    case FRSKY_BIND_DONE:
+      PROTOCOL_SetBindState(0);
+      FRSKYX_initialize_data(0);
+      channel_index_p2M = 0;
+      rfState8_p2M++;
+      break;
+*/
     case FRSKYX_DATA1:
       if (X8MODE)
         {
@@ -650,6 +690,8 @@ static void FRSKYX_initialize(uint8_t bind)
 
   if (bind)
     {
+      //PROTOCOL_SetBindState(0xFFFFFFFF);
+      //rfState8_p2M = FRSKY_BIND;
       FRSKYX_initialize_data(1);
       CC2500_SetTxRxMode(TX_EN);
       PROTO_Start_Callback( FRSKYX_bind_cb);
