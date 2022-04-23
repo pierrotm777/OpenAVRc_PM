@@ -146,7 +146,7 @@ static void HOTT_rf_init()
 	CC2500_WriteReg(CC2500_0C_FSCTRL0, g_model.rfOptionValue1);
 
   CC2500_SetTxRxMode(TX_EN);
-  CC2500_ManagePower();//CC2500_SetPower(TXPOWER_1);
+  CC2500_SetPower(TXPOWER_1);
 
 }
 
@@ -636,13 +636,13 @@ const void *HOTT_Cmds(enum ProtoCmds cmd)
       return 0;
     case PROTOCMD_GETOPTIONS:
       SetRfOptionSettings(pgm_get_far_address(RfOpt_HOTT_Ser),
-                       STR_DUMMY,      //Sub proto
-                       STR_RFTUNEFINE,      //Option 1 (int)
-                       STR_DUMMY,      //Option 2 (int)
-                       STR_RFPOWER,      //Option 3 (uint 0 to 31)
+                       STR_DUMMY,          //Sub proto
+                       STR_RFTUNEFINE,     //Option 1 (int)
+                       STR_DUMMY,          //Option 2 (int)
+                       STR_RFPOWER,        //Option 3 (uint 0 to 31)
                        STR_TELEMETRY,      //OptionBool 1
-                       STR_SYNCHRO_MODE,      //OptionBool 2
-                       STR_DUMMY       //OptionBool 3
+                       STR_SYNCHRO_MODE,   //OptionBool 2
+                       STR_DUMMY           //OptionBool 3
                          );
       return 0;
     default:
