@@ -47,7 +47,7 @@ uint8_t  hopping_frequency[78];
 
 const static RfOptionSettingsvar_t RfOpt_HOTT_Ser[] PROGMEM =
 {
-  /*rfProtoNeed*/PROTO_NEED_SPI,  //can be PROTO_NEED_SPI | BOOL1USED | BOOL2USED | BOOL3USED
+  /*rfProtoNeed*/PROTO_NEED_SPI | BOOL1USED | BOOL2USED,  //can be PROTO_NEED_SPI | BOOL1USED | BOOL2USED | BOOL3USED
  /*rfSubTypeMax*/0,
  /*rfOptionValue1Min*/-128, // FREQFINE MIN
  /*rfOptionValue1Max*/127,  // FREQFINE MAX
@@ -55,6 +55,9 @@ const static RfOptionSettingsvar_t RfOpt_HOTT_Ser[] PROGMEM =
  /*rfOptionValue2Max*/0,
  /*rfOptionValue3Max*/7,    // RF POWER
 };
+
+const pm_char STR_SYNCHRO_MODE[] PROGMEM = INDENT "Synch Mode";
+#define SYNCHRO_MODE (g_model.rfOptionBool2)
 
 //#define HOTT_FORCE_ID		// Force ID of original dump
 
@@ -139,7 +142,7 @@ static void HOTT_rf_init()
 	for (uint8_t i = 0; i < 39; ++i)
 		CC2500_WriteReg(i, pgm_read_byte_near(&HOTT_init_values[i]));
 
-  /* à remplacer par CC2500_ManageFreq(); */
+
 	CC2500_WriteReg(CC2500_0C_FSCTRL0, g_model.rfOptionValue1);
 
   CC2500_SetTxRxMode(TX_EN);
@@ -160,7 +163,7 @@ static void HOTT_tune_chan_fast()
 	CC2500_WriteReg(CC2500_0A_CHANNR, (rf_ch_num+1)*3);
 	CC2500_WriteReg(CC2500_25_FSCAL1, calData[rf_ch_num]);
 }
-/* remplacé par CC2500_ManageFreq();
+/*
 static void HOTT_tune_freq()
 {
 	if ( freq_fine_mem_p2M != g_model.rfOptionValue1)//freq_fine_mem_p2M != option
@@ -168,7 +171,7 @@ static void HOTT_tune_freq()
 		CC2500_WriteReg(CC2500_0C_FSCTRL0, g_model.rfOptionValue1);
 		CC2500_WriteReg(CC2500_0F_FREQ0, HOTT_FREQ0_VAL + HOTT_COARSE);
 		freq_fine_mem_p2M = g_model.rfOptionValue1 ;
-		rfState8_p2M = HOTT_START;								// Restart the tune process if option is changed to get good tuned values
+		send_seq_p2M = HOTT_START;								// Restart the tune process if option is changed to get good tuned values
 	}
 }
 */
@@ -287,7 +290,7 @@ static void HOTT_prep_data_packet()
 	packet_p2M[28] = 0x80;									// no sensor
 	packet_p2M[29] = 0x02;									// 0x02 when bind starts then when RX replies cycle in sequence 0x1A/22/2A/0A/12, 0x02 during normal packet_p2Ms, 0x01->text config menu, 0x0A->no more RX telemetry
 	#if defined(TODO_FRSKY)//#ifdef HOTT_FW_TELEMETRY
-		if(!HOTT_BIND)//if(IS_BIND_DONE)
+		if(!HOTT_BIND && HOTT_TELEMETRY)//if(IS_BIND_DONE)
 		{
 			static uint8_t prev_SerialRX_val=0;
 			if(HoTT_SerialRX)
@@ -306,7 +309,9 @@ static void HOTT_prep_data_packet()
 				}
 				else
 					packet_p2M[28] = 0x0F;							// RX, no button pressed
-				if(g_model.rfSubType == 0)//==HOTT_SYNC
+
+        /*see https://github.com/pascallanger/DIY-Multiprotocol-TX-Module/blob/master/Protocols_Details.md#sub_protocol-sync---0*/
+				if(SYNCHRO_MODE)//==HOTT_SYNC (Recommended for best telemetry performance.)
 					packet_p2M[29] = ((HOTT_sensor_seq+1)<<3) | 1;	// Telemetry packet_p2M sequence
 				else
 					packet_p2M[29] = 0x01;							// 0x01->Text config menu
@@ -314,7 +319,7 @@ static void HOTT_prep_data_packet()
 			else
 			{
 				packet_p2M[28] = 0x89+HOTT_sensor_cur;				// 0x89/8A/8B/8C/8D/8E during normal packet_p2Ms
-				if(g_model.rfSubType == 0)//== HOTT_SYNC
+				if(SYNCHRO_MODE)//== HOTT_SYNC (Recommended for best telemetry performance.)
 					packet_p2M[29] = ((HOTT_sensor_seq+1)<<3) | 2;	// Telemetry packet_p2M sequence
 			}
 			//debugln("28=%02X,29=%02X",packet_p2M[28],packet_p2M[29]);
@@ -336,12 +341,12 @@ static void HOTT_prep_data_packet()
 
 uint16_t HOTT_callback()
 {
-	switch(rfState8_p2M)
+	switch(send_seq_p2M)
 	{
 		case HOTT_START:
 			rf_ch_num = 0;
 			HOTT_tune_chan();
-			rfState8_p2M = HOTT_CAL;
+			send_seq_p2M = HOTT_CAL;
 			return 2000*2;
 		case HOTT_CAL:
 		  SCHEDULE_MIXER_END_IN_US(2000*2); // Schedule next Mixer calculations.
@@ -354,7 +359,7 @@ uint16_t HOTT_callback()
 				rf_ch_num=hopping_frequency[channel_index_p2M];
 				Hott_counter = 0;
 				CC2500_SetTxRxMode(RX_EN);
-				rfState8_p2M = HOTT_DATA1;
+				send_seq_p2M = HOTT_DATA1;
 			}
 			return 2000*2;
 
@@ -382,7 +387,7 @@ uint16_t HOTT_callback()
 			CC2500_WriteReg(CC2500_17_MCSM1, 0x10);		//??
 			CC2500_WriteReg(CC2500_18_MCSM0, 0x18);		//??
 			CC2500_Strobe(CC2500_SRX);					//??
-			rfState8_p2M++;		//HOTT_DATA2
+			send_seq_p2M++;		//HOTT_DATA2
 			return 1095*2;
 		case HOTT_DATA2:
 			//LBT
@@ -397,7 +402,7 @@ uint16_t HOTT_callback()
 			//Send packet_p2M
 			CC2500_SetTxRxMode(TX_EN);
 			CC2500_Strobe(CC2500_STX);
-			rfState8_p2M++;		//HOTT_RX1
+			send_seq_p2M++;		//HOTT_RX1
 			return 3880*2;
 		case HOTT_RX1:
 			//Clear all
@@ -415,7 +420,7 @@ uint16_t HOTT_callback()
 			CC2500_WriteReg(CC2500_1C_AGCCTRL1, 0x09);
 			CC2500_WriteReg(CC2500_06_PKTLEN, HOTT_RX_PACKET_LEN);
 			CC2500_Strobe(CC2500_SRX);
-			rfState8_p2M++;		//HOTT_RX2
+			send_seq_p2M++;		//HOTT_RX2
 			return 4025*2;
 		case HOTT_RX2:
 			//Telemetry
@@ -446,7 +451,7 @@ uint16_t HOTT_callback()
 						HOTT_TXID_init(1);
 					}
 					#if defined(TODO_FRSKY)//#ifdef HOTT_FW_TELEMETRY
-						else
+						else if HOTT_TELEMETRY
 						{	//Telemetry
 							// [0..4] = TXID
 							// [5..9] = RXID
@@ -548,24 +553,27 @@ uint16_t HOTT_callback()
 				}
 			}
 			#if defined(TODO_FRSKY)//#ifdef HOTT_FW_TELEMETRY
-				HOTT_packet_count++;
-				if(HOTT_packet_count>=100)
-				{
-					TX_LQI=pps_counter;
-					if(pps_counter==0)
-					{ // lost connection with RX, power cycle? research sensors again.
-						HOTT_sensor_cur=3;
-						HOTT_sensor_seq=0;
-						HOTT_sensor_valid=false;
-						for(uint8_t i=0; i<HOTT_SENSOR_TYPE;i++)
-							HOTT_sensor_ok[i]=false;	// no sensors detected
-						Hott_State=HOTT_SENSOR_SEARCH_PERIOD;
-					}
-					pps_counter=HOTT_packet_count=0;
+			  if (HOTT_TELEMETRY)
+        {
+          HOTT_packet_count++;
+          if(HOTT_packet_count>=100)
+          {
+            TX_LQI=pps_counter;
+            if(pps_counter==0)
+            { // lost connection with RX, power cycle? research sensors again.
+              HOTT_sensor_cur=3;
+              HOTT_sensor_seq=0;
+              HOTT_sensor_valid=false;
+              for(uint8_t i=0; i<HOTT_SENSOR_TYPE;i++)
+                HOTT_sensor_ok[i]=false;	// no sensors detected
+              Hott_State=HOTT_SENSOR_SEARCH_PERIOD;
+            }
+            pps_counter=HOTT_packet_count=0;
+          }
 				}
 			#endif
 
-			rfState8_p2M=HOTT_DATA1;
+			send_seq_p2M=HOTT_DATA1;
       return 1000 * 2;
 	}
 	return 0;
@@ -593,6 +601,8 @@ static void HOTT_initialise(uint8_t bind)
 	HOTT_rf_init();
 
 	#if defined(TODO_FRSKY)//#ifdef HOTT_FW_TELEMETRY
+	if (HOTT_TELEMETRY)
+  {
 		HoTT_SerialRX_val=0;
 		HoTT_SerialRX=false;
 		HOTT_sensor_cur=3;
@@ -603,8 +613,9 @@ static void HOTT_initialise(uint8_t bind)
 			HOTT_sensor_ok[i]=false;	// no sensors detected
 		HOTT_packet_count=0;
 		Hott_State=HOTT_SENSOR_SEARCH_PERIOD;
+  }
 	#endif
-	rfState8_p2M = HOTT_START;
+	send_seq_p2M = HOTT_START;
 
 	PROTO_Start_Callback(HOTT_cb);
 }
@@ -629,8 +640,8 @@ const void *HOTT_Cmds(enum ProtoCmds cmd)
                        STR_RFTUNEFINE,      //Option 1 (int)
                        STR_DUMMY,      //Option 2 (int)
                        STR_RFPOWER,      //Option 3 (uint 0 to 31)
-                       STR_DUMMY,      //OptionBool 1
-                       STR_DUMMY,      //OptionBool 2
+                       STR_TELEMETRY,      //OptionBool 1
+                       STR_SYNCHRO_MODE,      //OptionBool 2
                        STR_DUMMY       //OptionBool 3
                          );
       return 0;

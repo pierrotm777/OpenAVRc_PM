@@ -234,6 +234,7 @@ static void HOTT_prep_data_packet()
 
 	packet_p2M[3] = upper;									// used for failsafe and upper channels (only supporting 16 channels)
 	#ifdef FAILSAFE_ENABLE
+	/*
 		static uint8_t failsafe_count=0;
 		if((!g_model.rfOptionValue2) && (!HOTT_BIND))//if(IS_FAILSAFE_VALUES_on && IS_BIND_DONE)
 		{
@@ -246,6 +247,7 @@ static void HOTT_prep_data_packet()
 		}
 		else
 			failsafe_count=0;
+		*/
 	#endif
 
 	// Channels value are PPM*2, -100%=1100µs, +100%=1900µs, order TAER
