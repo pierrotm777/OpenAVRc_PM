@@ -61,14 +61,13 @@ const static RfOptionSettingsvar_t RfOpt_SFHSS_Ser[] PROGMEM =
 
 static uint8_t fhss_code=0; // 0-27
 static uint16_t counter;
-//static uint8_t rf_chan;//#define SFHSS_RF_CH_NUM channel_index_p2M ???
 
 enum {
-    SFHSS_START = 0x00,
-    SFHSS_CAL   = 0x01,
+    SFHSS_START = 0x101,
+    SFHSS_CAL   = 0x102,
+    SFHSS_TUNE  = 0x103,
     SFHSS_DATA1 = 0x02,
-    SFHSS_DATA2 = 0x03,
-    SFHSS_TUNE  = 0x04
+    SFHSS_DATA2 = 0x0b
 };
 
 #define SFHSS_FREQ0_VAL 0xC4
@@ -103,32 +102,18 @@ enum {
 // FOCCFG   1D - not interesting, Frequency Offset Compensation
 // FREND0   10 - PA_POWER = 0
 
-// Fast calibration table, see page 55 of swrs040c.pdf
-// 31.2 Frequency Hopping and Multi-temp_rfid_addr_p2M Systems
-static uint8_t rf_cal[50];
 
-const static uint8_t ZZ_SFHSSInitSequence[] PROGMEM =
-{
+static const uint8_t init_values[] = {
   /* 00 */ 0x2F, 0x2E, 0x2F, 0x07, 0xD3, 0x91, 0x0D, 0x04,
-  /* 08 */ 0x0C, 0x29, 0x10, 0x06, 0x00, 0x5C, 0x4E, SFHSS_FREQ0_VAL + SFHSS_COARSE,
+  /* 08 */ 0x0C, 0x29, 0x10, 0x06, 0x00, 0x5C, 0x4E, SFHSS_FREQ0_VAL,
   /* 10 */ 0x7C, 0x43, 0x83, 0x23, 0x3B, 0x44, 0x07, 0x0C,
   /* 18 */ 0x08, 0x1D, 0x1C, 0x43, 0x40, 0x91, 0x57, 0x6B,
   /* 20 */ 0xF8, 0xB6, 0x10, 0xEA, 0x0A, 0x11, 0x11
 };
 
-static void SFHSS_init()
-{
- uint_farptr_t pdata = pgm_get_far_address(ZZ_SFHSSInitSequence);
-
- for (uint8_t i = 0; i<(DIM(ZZ_SFHSSInitSequence)); ++i)
-  {
-   uint8_t dat = pgm_read_byte_far(pdata++);
-   CC2500_WriteReg(i, dat);
-  }
- CC2500_ManageFreq();//CC2500_WriteReg(CC2500_0C_FSCTRL0, option);
- CC2500_SetTxRxMode(TX_EN);
- CC2500_ManagePower();//CC2500_SetPower(TXPOWER_1);
-}
+// Fast calibration table, see page 55 of swrs040c.pdf
+// 31.2 Frequency Hopping and Multi-Channel Systems
+static uint8_t rf_cal[30][3];
 
 static void SFHSS_tune_chan()
 {
@@ -141,7 +126,8 @@ static void SFHSS_tune_chan_fast()
 {
     CC2500_Strobe(CC2500_SIDLE);
     CC2500_WriteReg(CC2500_0A_CHANNR, SFHSS_RF_CH_NUM*6+16);
-    CC2500_WriteReg(CC2500_25_FSCAL1, rf_cal[SFHSS_RF_CH_NUM]);
+    CC2500_WriteRegisterMulti(CC2500_23_FSCAL3, rf_cal[channel_index_p2M], 3);
+    _delay_us(6);
 }
 
 static void SFHSS_tune_freq()
@@ -151,11 +137,23 @@ static void SFHSS_tune_freq()
 		CC2500_WriteReg(CC2500_0C_FSCTRL0, g_model.rfOptionValue1);
 		CC2500_WriteReg(CC2500_0F_FREQ0, SFHSS_FREQ0_VAL + SFHSS_COARSE);
 		freq_fine_mem_p2M = g_model.rfOptionValue1 ;
-		rfState8_p2M = SFHSS_START;								// Restart the tune process if option is changed to get good tuned values
+		rfState16_p2M = SFHSS_START;								// Restart the tune process if option is changed to get good tuned values
 	}
 }
 
+static void SFHSS_init()
+{
+    CC2500_Reset();
+    CC2500_Strobe(CC2500_SIDLE);
 
+//    for (size_t i = 0, reg = CC2500_00_IOCFG2; i < sizeof(init_values); ++i, ++reg) {
+//        CC2500_WriteReg(reg, init_values[i]);
+//    }
+    CC2500_WriteRegisterMulti(CC2500_00_IOCFG2, init_values, sizeof(init_values));
+
+ CC2500_SetTxRxMode(TX_EN);
+ CC2500_ManagePower();//CC2500_SetPower(TXPOWER_1);
+}
 
 static void SFHSS_calc_next_chan()
 {
@@ -189,7 +187,7 @@ static void SFHSS_send_packet()//build_data_packet()
     // command.bit1 is unknown but seems to be linked to the payload[0].bit0 but more dumps are needed: payload[0]=0x82 -> =0, payload[0]=0x81 -> =1
     // command.bit2 is the failsafe transmission indicator: =0 -> normal data, =1->failsafe data
     // command.bit3 is the temp_rfid_addr_p2Ms indicator: =0 -> CH1-4, =1 -> CH5-8
-    uint8_t command = (rfState8_p2M == SFHSS_DATA1) ? 0 : 1; // Building packet for Data1 or Data2
+    uint8_t command = (rfState16_p2M == SFHSS_DATA1) ? 0 : 1; // Building packet for Data1 or Data2
     counter+=command;
     /*// Failsafe
     if( (counter&0x3FC) == 0x3FC )
@@ -250,53 +248,53 @@ static void SFHSS_send_packet()//build_data_packet()
     packet_p2M[11] = (channel[3] << 3) | ((fhss_code >> 2) & 0x07);
     packet_p2M[12] = (fhss_code << 6) | command;
 
-    CC2500_WriteData(packet_p2M, SFHSS_PACKET_LEN);
+	SFHSS_tune_chan_fast();
+    CC2500_WriteData(packet_p2M, sizeof(packet_p2M));
 }
 
 
 //static uint16_t mixer_runtime;
 static uint16_t SFHSS_callback()
 {
-    switch(rfState8_p2M)
+    switch(rfState16_p2M)
     {
     case SFHSS_START:
         SFHSS_RF_CH_NUM = 0;
         SFHSS_tune_chan();
-        rfState8_p2M = SFHSS_CAL;
+        rfState16_p2M = SFHSS_CAL;
         return 2000*2;
     case SFHSS_CAL:
         SCHEDULE_MIXER_END_IN_US(2000*2); // Schedule next Mixer calculations.
-        rf_cal[SFHSS_RF_CH_NUM] = CC2500_ReadReg(CC2500_25_FSCAL1);
-        if (++SFHSS_RF_CH_NUM < 30) {
+        CC2500_ReadRegisterMulti(CC2500_23_FSCAL3, rf_cal[channel_index_p2M], 3);
+        if (++channel_index_p2M < 30) {
             SFHSS_tune_chan();
         } else {
-            SFHSS_RF_CH_NUM = 0;
+            channel_index_p2M = 0;
             counter = 0;
-            rfState8_p2M = SFHSS_DATA1;
+            rfState16_p2M = SFHSS_DATA1;
         }
         return 2000*2;
-
     /* Work cycle, 6.8ms, second packet 1.65ms after first */
     #define SFHSS_PACKET_PERIOD	6800U
-    #define SFHSS_DATA2_TIMING	1625	// Adjust this value between 1600 and 1650 if your RX(s) are not operating properly
+    #define SFHSS_DATA2_TIMING	1630	// Adjust this value between 1600 and 1650 if your RX(s) are not operating properly
     case SFHSS_DATA1:
         SCHEDULE_MIXER_END_IN_US(SFHSS_PACKET_PERIOD); // Schedule next Mixer calculations.
         SFHSS_send_packet();
-        rfState8_p2M = SFHSS_DATA2;
+        rfState16_p2M = SFHSS_DATA2;
         return SFHSS_DATA2_TIMING * 2;
     case SFHSS_DATA2:
         SFHSS_send_packet();
         SFHSS_calc_next_chan();
-        rfState8_p2M = SFHSS_TUNE;
-        return (SFHSS_PACKET_PERIOD -2000 -SFHSS_DATA2_TIMING) * 2;	// original 2000
+        rfState16_p2M = SFHSS_TUNE;
+        return 2020 * 2;	// original 2000
     case SFHSS_TUNE:
-			rfState8_p2M = SFHSS_DATA1;
+			rfState16_p2M = SFHSS_DATA1;
 			SFHSS_tune_freq();
 			SFHSS_tune_chan_fast();
       CC2500_ManagePower();//CC2500_SetPower(TXPOWER_1);
       heartbeat |= HEART_TIMER_PULSES;
       CALCULATE_LAT_JIT(); // Calculate latency and jitter.
-      return 2000*2;
+      return 3150*2;
 
     }
 
@@ -357,7 +355,7 @@ static void SFHSS_initialize(uint8_t bind)
   //loadrfidaddr_rxnum(3);
   CC2500_Reset();
   SFHSS_init();
-  rfState8_p2M = SFHSS_START;
+  rfState16_p2M = SFHSS_START;
   if (bind || SFHSS_autobind)
   {
     if (SFHSS_autobind)
