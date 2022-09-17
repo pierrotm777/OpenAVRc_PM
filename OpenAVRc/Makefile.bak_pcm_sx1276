@@ -262,8 +262,8 @@ A7105PAG = 20
 SX1276 = NO
 
 # Set SX1276 PA gain in DB
-# Values = 20,22
-SX1276PAG = 20
+# Values = 14,20
+SX1276PAG = 14
 
 # Enable X-ANY feature
 # Values = NO, 1, 2, 3 ,4
@@ -765,7 +765,13 @@ ifeq ($(PCB), MEGA2560)
    		CPPDEFS += -DPROTO_HAS_A7105
  	  	CPPDEFS += -DA7105PA_GAIN=$(A7105PAG)
   	endif
+	
+  	ifeq ($(SX1276), YES)
+   		CPPDEFS += -DPROTO_HAS_SX1276
+ 	  	CPPDEFS += -DASX1276PA_GAIN=$(SX1276PAG)
+  	endif
   endif
+
 
 	ifneq ($(X_ANY), NO)
 	CPPSRC += Xany.cpp gui/menu_model_Xany.cpp
