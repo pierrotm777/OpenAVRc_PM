@@ -46,6 +46,12 @@
   #define IS_FUTPCM1K_PROTOCOL(protocol)  (0)
 #endif
 
+#if (PCM_PROTOCOL==GRAUPCM512)
+  #define IS_GRAUPCM512_PROTOCOL(protocol)  (protocol==PROTOCOL_GRAUPCM512)
+#else
+  #define IS_GRAUPCM512_PROTOCOL(protocol)  (0)
+#endif
+
 #if (SERIAL_PROTOCOL==DSM)
   #define IS_DSM2_SERIAL_PROTOCOL(protocol)  (protocol==PROTOCOL_DSM_SERIAL)
 #else
