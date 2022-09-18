@@ -78,6 +78,8 @@
 #include "SKYARTEC_cc2500.c"
 #include "CORONA_cc2500.c"
 #include "HITEC_cc2500.c"
+//#include "HOTT_cc2500.c"
+//#include "FUTABA_cc2500.c"
 #endif
 
 #ifdef PROTO_HAS_CYRF6936
@@ -108,9 +110,9 @@
 #endif
 
 #ifdef PROTO_HAS_SX1276
-#include "iface_sx1276.h"
-#include "sx1276.c"
-#include "FRSKYR9_sx1276.c"
+//#include "iface_sx1276.h"
+//#include "sx1276.c"
+//#include "FRSKYR9_sx1276.c"
 #endif // PROTO_HAS_SX1276
 
 #endif

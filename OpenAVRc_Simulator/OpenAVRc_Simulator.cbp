@@ -290,10 +290,9 @@
 			<Add option="-DX_ANY_4_POT=STICK_LV" />
 			<Add option="-DDSM=1" />
 			<Add option="-DMULTIMODULE=2" />
-			<Add option="-DCRSF=3" />
-			<Add option="-DSBUS=4" />
-			<Add option="-DSUMD=5" />
-			<Add option="-DSERIAL_PROTOCOL=SBUS" />
+			<Add option="-DSERIAL_PROTOCOL=MULTIMODULE" />
+			<Add option="-DFUTPCM1K=1" />
+			<Add option="-DPCM_PROTOCOL=FUTPCM1K" />
 			<Add option="-DSPIMODULES" />
 			<Add option="-DPROTO_HAS_CC2500" />
 			<Add option="-DCC2500PA_GAIN=20" />
@@ -449,6 +448,7 @@
 			<Option link="0" />
 		</Unit>
 		<Unit filename="../OpenAVRc/protocol/FRSKY_DEF_cc2500.h" />
+		<Unit filename="../OpenAVRc/protocol/FUTABA_PCM1024.h" />
 		<Unit filename="../OpenAVRc/protocol/HITEC_cc2500.c">
 			<Option compilerVar="CC" />
 			<Option compile="0" />
@@ -476,22 +476,12 @@
 			<Option compile="0" />
 			<Option link="0" />
 		</Unit>
-		<Unit filename="../OpenAVRc/protocol/SBUS_SERIAL.c">
-			<Option compilerVar="CC" />
-			<Option compile="0" />
-			<Option link="0" />
-		</Unit>
 		<Unit filename="../OpenAVRc/protocol/SKYARTEC_cc2500.c">
 			<Option compilerVar="CC" />
 			<Option compile="0" />
 			<Option link="0" />
 		</Unit>
 		<Unit filename="../OpenAVRc/protocol/STANEK_nrf24l01.c">
-			<Option compilerVar="CC" />
-			<Option compile="0" />
-			<Option link="0" />
-		</Unit>
-		<Unit filename="../OpenAVRc/protocol/SUMD_SERIAL.c">
 			<Option compilerVar="CC" />
 			<Option compile="0" />
 			<Option link="0" />

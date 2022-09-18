@@ -35,6 +35,10 @@
 #ifndef pulses_avr_h
 #define pulses_avr_h
 
+#if (PCM_PROTOCOL==FUTPCM1K)
+#include "../protocol/FUTABA_PCM1024.h"
+#endif
+
 static volatile uint16_t timer_counts;
 
 
@@ -62,6 +66,9 @@ union p2mhz_t
 {
   uint16_t pword[PULSES_WORD_SIZE];
   uint8_t  pbyte[PULSES_BYTE_SIZE]; // 144
+#if (PCM_PROTOCOL==FUTPCM1K)
+	FutPcm1024St_t Pcm1024;
+#endif
 } pulses2MHz;
 
 enum ppmtype{

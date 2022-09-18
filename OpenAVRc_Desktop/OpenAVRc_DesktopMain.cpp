@@ -135,6 +135,7 @@ bool GPS = 0;
 bool VARIO = 0;
 bool PPM = 1;
 wxString SERIAL_PROTOCOL = ("NO");
+wxString PCM_PROTOCOL = ("NO");
 bool CC2500 = 0;
 bool CYRF6936 = 0;
 bool NRF24l01 = 0;
@@ -144,7 +145,6 @@ wxString CC2500PAG = ("0");
 wxString CYRF6936PAG = ("0");
 wxString NRF24l01PAG = ("0");
 wxString A7105PAG = ("0");
-wxString SX1276PAG = ("0");
 bool SD_CARD = 0;
 bool TEMPLATES = 0;
 wxString THREE_POS = ("NO");
@@ -175,6 +175,7 @@ bool NOANDSECONDE = 1;
 bool SHUTDOWN_CONFIRMATION = 0;
 bool FRAM = 0;
 bool PERSONAMES = 0;
+bool DBLGAZSTICK = 0;
 wxString OTHERCOMPOPTIONS = "";
 bool INV_STICK_RH = 0;
 bool INV_STICK_LV = 0;
@@ -198,6 +199,10 @@ wxString encoderNo = ("EN0");
 wxString switchXD0 = ("XD0");
 wxString switchXD1 = ("XD1");
 wxString switchXD2 = ("XD2");
+wxString stickRud = ("Rud");
+wxString stickEle = ("Ele");
+wxString stickThr = ("Thr");
+wxString stickAil = ("Ail");
 
 wxString NUMXANY = ("NO");
 
@@ -452,14 +457,14 @@ void OpenAVRc_DesktopFrame::OnAbout(wxCommandEvent& event)
 {
   wxAboutDialogInfo Aboutbox;
   Aboutbox.SetName("OpenAVRc Desktop");
-  Aboutbox.SetVersion("V 3.0 Beta");
+  Aboutbox.SetVersion("V 3.10 Beta");
   Aboutbox.SetLicence(_(" GPLv2 . Firmware basé sur NextStepRc 2.18 "));
   Aboutbox.SetDescription(_("Logiciel pour la personnalisation, la compilation, le flashage, la sauvegarde de votre radio OpenAVRc     "));
-  Aboutbox.SetCopyright(wxT("(C) 2016-2021 OpenAVRc Team"));
+  Aboutbox.SetCopyright(wxT("(C) 2016-2022 OpenAVRc Team"));
   Aboutbox.SetWebSite(wxT("https://github.com/Ingwie/OpenAVRc_Dev"));
   Aboutbox.AddDeveloper(wxT(
     "OpenAVRc Team :\n\n"
-    "Firmware : Bracame, Payalneg, RC-Navy, Sloped Soarer, Supiiik.\n"
+    "Firmware : Bracame, Payalneg, Pierrotm777, RC-Navy, Sloped Soarer, Supiiik.\n"
     "Applications : Bracame, Mentero.\n"
     "PCB Shield : Anthobreizh, Pierrotm777, Pyrall.\n"
     "Documentation : JPZ(Testeur68), Pierrotm777, Pyrall.\n"
@@ -658,6 +663,7 @@ void OpenAVRc_DesktopFrame::LoadConfig(wxString temp)
   configFile->Read(wxT("GPS"),&GPS);
   configFile->Read(wxT("VARIO"),&VARIO);
   configFile->Read(wxT("PPM"),&PPM);
+  configFile->Read(wxT("PCM_PROTOCOL"),&PCM_PROTOCOL);
   configFile->Read(wxT("SERIAL_PROTOCOL"),&SERIAL_PROTOCOL);
   configFile->Read(wxT("CC2500"),&CC2500);
   configFile->Read(wxT("CYRF6936"),&CYRF6936);
@@ -668,7 +674,6 @@ void OpenAVRc_DesktopFrame::LoadConfig(wxString temp)
   configFile->Read(wxT("CYRF6936PAG"),&CYRF6936PAG);
   configFile->Read(wxT("NRF24l01PAG"),&NRF24l01PAG);
   configFile->Read(wxT("A7105PAG"),&A7105PAG);
-  configFile->Read(wxT("SX1276PAG"),&SX1276PAG);
   configFile->Read(wxT("SD_CARD"),&SD_CARD);
   configFile->Read(wxT("TEMPLATES"),&TEMPLATES);
   configFile->Read(wxT("THREE_POS"),&THREE_POS);
@@ -701,6 +706,7 @@ void OpenAVRc_DesktopFrame::LoadConfig(wxString temp)
   configFile->Read(wxT("BLUETOOTH"),&BLUETOOTH);
   configFile->Read(wxT("XMODEM"),&XMODEM);
   configFile->Read(wxT("PERSONAMES"),&PERSONAMES);
+  configFile->Read(wxT("DBLGAZSTICK"),&DBLGAZSTICK);
   configFile->Read(wxT("OTHERCOMPOPTIONS"),&OTHERCOMPOPTIONS);
   configFile->Read(wxT("INV_STICK_RH"),&INV_STICK_RH);
   configFile->Read(wxT("INV_STICK_LV"),&INV_STICK_LV);
@@ -721,6 +727,10 @@ void OpenAVRc_DesktopFrame::LoadConfig(wxString temp)
   configFile->Read(wxT("switchXD0"),&switchXD0);
   configFile->Read(wxT("switchXD1"),&switchXD1);
   configFile->Read(wxT("switchXD2"),&switchXD2);
+  configFile->Read(wxT("stickRud"),&stickRud);
+  configFile->Read(wxT("stickEle"),&stickEle);
+  configFile->Read(wxT("stickThr"),&stickThr);
+  configFile->Read(wxT("stickAil"),&stickAil);
 
   //XANY
   configFile->Read(wxT("NUMXANY"),&NUMXANY);
@@ -790,6 +800,7 @@ extern void OpenAVRc_DesktopFrame::SaveConfig()
   configFile->Write(wxT("GPS"),GPS);
   configFile->Write(wxT("VARIO"),VARIO);
   configFile->Write(wxT("PPM"),PPM);
+  configFile->Write(wxT("PCM_PROTOCOL"),PCM_PROTOCOL);
   configFile->Write(wxT("SERIAL_PROTOCOL"),SERIAL_PROTOCOL);
   configFile->Write(wxT("CC2500"),CC2500);
   configFile->Write(wxT("CYRF6936"),CYRF6936);
@@ -800,7 +811,6 @@ extern void OpenAVRc_DesktopFrame::SaveConfig()
   configFile->Write(wxT("CYRF6936PAG"),CYRF6936PAG);
   configFile->Write(wxT("NRF24l01PAG"),NRF24l01PAG);
   configFile->Write(wxT("A7105PAG"),A7105PAG);
-  configFile->Write(wxT("SX1276PAG"),SX1276PAG);
   configFile->Write(wxT("SD_CARD"),SD_CARD);
   configFile->Write(wxT("TEMPLATES"),TEMPLATES);
   configFile->Write(wxT("THREE_POS"),THREE_POS);
@@ -833,6 +843,7 @@ extern void OpenAVRc_DesktopFrame::SaveConfig()
   configFile->Write(wxT("BLUETOOTH"),BLUETOOTH);
   configFile->Write(wxT("XMODEM"),XMODEM);
   configFile->Write(wxT("PERSONAMES"),PERSONAMES);
+  configFile->Write(wxT("DBLGAZSTICK"),DBLGAZSTICK);
   configFile->Write(wxT("OTHERCOMPOPTIONS"),OTHERCOMPOPTIONS);
   configFile->Write(wxT("INV_STICK_RH"),INV_STICK_RH);
   configFile->Write(wxT("INV_STICK_LV"),INV_STICK_LV);
@@ -853,6 +864,10 @@ extern void OpenAVRc_DesktopFrame::SaveConfig()
   configFile->Write(wxT("switchXD0"),switchXD0);
   configFile->Write(wxT("switchXD1"),switchXD1);
   configFile->Write(wxT("switchXD2"),switchXD2);
+  configFile->Write(wxT("stickRud"),stickRud);
+  configFile->Write(wxT("stickEle"),stickEle);
+  configFile->Write(wxT("stickThr"),stickThr);
+  configFile->Write(wxT("stickAil"),stickAil);
 
   //XANY
   configFile->Write(wxT("NUMXANY"),NUMXANY);
@@ -936,8 +951,6 @@ void OpenAVRc_DesktopFrame::OnListBoxConfigDClick(wxCommandEvent& event)
   ListBoxConfig->SetStringSelection(Profil);
   DrawLbmSplash();
 }
-
-
 
 void OpenAVRc_DesktopFrame::OnMenuNewconfigSelected(wxCommandEvent& event)
 {

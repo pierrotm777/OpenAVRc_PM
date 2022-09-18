@@ -58,7 +58,7 @@ const static RfOptionSettingsvar_t RfOpt_FUTPCM1K_Ser[] PROGMEM =
  /*rfOptionValue3Max*/0,    // RF POWER
 };
 
-FutabaSt_t Futaba;
+
 /*
 Channels scaling:
 Width (us) -> PCM1024 Value
@@ -79,8 +79,7 @@ Width (us) -> PCM1024 Value
 #define PWM_US_FULL_EXC            (PWM_US_MAX - PWM_US_MIN)       // 1200 us
 #define PWM_US_CENTER              ((PWM_US_MIN + PWM_US_MAX) / 2) // 1520 us
 
-
-const uint16_t FutPcm1kFailsafeTbl[8] PROGMEM = {PWM_US_CENTER, PWM_US_CENTER, PWM_US_MIN, PWM_US_CENTER, PWM_US_CENTER, PWM_US_CENTER, PWM_US_CENTER, PWM_US_CENTER}  ;   
+const uint16_t FutPcm1kFailsafeTbl[8] PROGMEM = {PWM_US_CENTER, PWM_US_CENTER, PWM_US_MIN, PWM_US_CENTER, PWM_US_CENTER, PWM_US_CENTER, PWM_US_CENTER, PWM_US_CENTER}  ;
 
 #define FUT_PCM_PACKETS_PER_FRAME  4 // See hereafter
 
@@ -235,7 +234,7 @@ union Fut40BitRadioPcmPacket_Union
   };
 }__attribute__((__packed__));
 
-#define FUT_PCM_BIT_DURATION_HALF_US    (150 * 2)
+#define FUT_PCM_BIT_DURATION_HALF_US    (150 * 2) // 1 bit duration is 150us -> 2 x 2MHz Tick = 300 Ticks (Half us)
 
 const uint16_t ConsecBitDurationHalfUs[] PROGMEM = {
                                          /*  0 */ (18 * FUT_PCM_BIT_DURATION_HALF_US), /* Index 0 is for Sync (18 bits) */
@@ -261,13 +260,32 @@ const uint16_t ConsecBitDurationHalfUs[] PROGMEM = {
 /* PRIVATE FUNCTION PROTOTYPES */
 static uint16_t UsToPcmValue(int16_t PwmUs, uint8_t Delta);
 static uint8_t  DeltaUsToDeltaCode(int16_t DeltaUs);
-static inline void    PcmStreamSetConsecBitNb(uint8_t NblIdx, uint8_t ConsecBitNb);
-static inline uint8_t PcmStreamGetConsecBitNb(uint8_t NblIdx);
+static inline void    PcmStreamSetConsecBitNb(uint8_t BufIdx, uint8_t NblIdx, uint8_t ConsecBitNb);
+static inline uint8_t PcmStreamGetConsecBitNb(uint8_t BufIdx, uint8_t NblIdx);
 
 /* PUBLIC FUNCTIONS */
+#warning TO DO: if PCM1024 is the selected protocol, call FutabaPcm1024_updateXanyChMap() when Xany Channel is validated
+void FutabaPcm1024_updateXanyChMap(void)
+{
+	uint8_t ChIdx;
+
+	Futaba.Pcm1024.XanyChMap = 0;
+	for(uint8_t XanyIdx = 0; XanyIdx < NUM_X_ANY; XanyIdx++)
+	{
+		if(g_model.Xany[XanyIdx].Active)
+		{
+			ChIdx = g_model.Xany[XanyIdx].ChId;
+			if(ChIdx < FUT_PCM1024_PROP_CH_NB)
+			{
+				Futaba.Pcm1024.XanyChMap |= (1 << ChIdx);
+			}
+		}
+	}
+}
+
 void FutabaPcm1024_buildHalfRadioPcmBitStream(void)
 {
-  uint8_t  PacketIdx = 0, PosChId, DeltaChId, IsOdd, BitIdx, BitCnt;
+  uint8_t  PacketIdx = 0, PosChIdx, DeltaChIdx, IsOdd, BitIdx, BitCnt;
   uint64_t BitMask;
   Fut24BitPcmPacket_Union      Fut24BitPcmPacket;
   Fut40BitRadioPcmPacket_Union Fut40BitRadioPcmPacket[FUT_PCM_PACKETS_PER_FRAME / 2];
@@ -279,11 +297,11 @@ void FutabaPcm1024_buildHalfRadioPcmBitStream(void)
     // OK: the 4 Radio PCM Packets are ready -> Build the Bit stream of the Radio PCM Frame
     Futaba.Pcm1024.BuildNblIdx    = 0;
     // Preamble -> Odd: 1100, Even: 110000
-    PcmStreamSetConsecBitNb(Futaba.Pcm1024.BuildNblIdx++, 2);PcmStreamSetConsecBitNb(Futaba.Pcm1024.BuildNblIdx++, IsOdd? 2: 4);
+    PcmStreamSetConsecBitNb(!Futaba.Pcm1024.IsrBufIdx, Futaba.Pcm1024.BuildNblIdx++, 2);PcmStreamSetConsecBitNb(!Futaba.Pcm1024.IsrBufIdx, Futaba.Pcm1024.BuildNblIdx++, IsOdd? 2: 4);
     // Sync Pulse: 18 x '1' of 150 us
-    PcmStreamSetConsecBitNb(Futaba.Pcm1024.BuildNblIdx++, 0); // 0 means 18 as ConsecBitNb coded on 4 bits -> Take this into account in ISR
+    PcmStreamSetConsecBitNb(!Futaba.Pcm1024.IsrBufIdx, Futaba.Pcm1024.BuildNblIdx++, 0); // 0 means 18 as ConsecBitNb coded on 4 bits -> Take this into account in ISR
     // Odd and Even Frame Code -> Odd: 00000011,  Even: 000011
-    PcmStreamSetConsecBitNb(Futaba.Pcm1024.BuildNblIdx++, IsOdd? 6: 4);PcmStreamSetConsecBitNb(Futaba.Pcm1024.BuildNblIdx++, 2);
+    PcmStreamSetConsecBitNb(!Futaba.Pcm1024.IsrBufIdx, Futaba.Pcm1024.BuildNblIdx++, IsOdd? 6: 4);PcmStreamSetConsecBitNb(!Futaba.Pcm1024.IsrBufIdx, Futaba.Pcm1024.BuildNblIdx++, 2);
     // Continue to populate the Bit stream table with the 4 x Fut40BitRadioPcmPacket
     Futaba.Pcm1024.BitVal = 1;
   }
@@ -293,22 +311,21 @@ void FutabaPcm1024_buildHalfRadioPcmBitStream(void)
     Fut24BitPcmPacket.AuxBit0 = 0;
     if(Futaba.Pcm1024.PacketIdx < FUT_PCM_PACKETS_PER_FRAME)
     {
-      PosChId   = 1 + (2 * (Futaba.Pcm1024.PacketIdx % FUT_PCM_PACKETS_PER_FRAME)); // 1, 3, 5, 7
-      DeltaChId = PosChId + 1;                   // 2, 4, 6, 8
+      PosChIdx   = (2 * (Futaba.Pcm1024.PacketIdx % FUT_PCM_PACKETS_PER_FRAME)); // PosChIdx = 0, 2, 4, 6 -> ChId = 1, 3, 5, 7
+      DeltaChIdx = PosChIdx + 1;                   // DeltaChIdx = 1, 3, 5, 7 -> ChId = 2, 4, 6, 8
     }
     else
     {
-      DeltaChId = 1 + (2 * (Futaba.Pcm1024.PacketIdx % FUT_PCM_PACKETS_PER_FRAME)); // 1, 3, 5, 7
-      PosChId   = DeltaChId + 1;                 // 2, 4, 6, 8
+      DeltaChIdx = (2 * (Futaba.Pcm1024.PacketIdx % FUT_PCM_PACKETS_PER_FRAME)); // DeltaChIdx = 0, 2, 4, 6 -> ChId = 1, 3, 5, 7
+      PosChIdx   = DeltaChIdx + 1;                 // PosChIdx = 1, 3, 5, 7 -> ChId = 2, 4, 6, 8
     }
-    Fut24BitPcmPacket.Position  = UsToPcmValue(PPM_CENTER + (channelOutputs[PosChId - 1] / 2), 0);
-    Fut24BitPcmPacket.Delta     = DeltaUsToDeltaCode((channelOutputs[DeltaChId - 1] - Futaba.Pcm1024.MemoChOutputs[DeltaChId - 1]) / 2);
-#if defined(X_ANY)
-	/* TO DO: optimize this by overwriting Delta to 8 ONLY for channels using X-Any (with the X-Any instance enabled) */
-	Fut24BitPcmPacket.Delta     = 8; // X-Any cannot work with "smooth" variation (so delta (in us) between 2 Positions shall be almost null)
-#warning TO DO: optimize this!
-#endif
-    Futaba.Pcm1024.MemoChOutputs[DeltaChId - 1] = channelOutputs[DeltaChId - 1]; // MemoChOutputs[] is used to compute Deltas
+    Fut24BitPcmPacket.Position  = UsToPcmValue(PPM_CENTER + (channelOutputs[PosChIdx] / 2), 0);
+		Fut24BitPcmPacket.Delta = DeltaUsToDeltaCode((channelOutputs[DeltaChIdx] - Futaba.Pcm1024.MemoChOutputs[DeltaChIdx]) / 2);
+		if(Futaba.Pcm1024.XanyChMap & (1 << DeltaChIdx))
+		{
+			Fut24BitPcmPacket.Delta = 8; // X-Any cannot work with "smooth" variation (so delta (in us) between 2 Positions shall be almost null)
+		}
+    Futaba.Pcm1024.MemoChOutputs[DeltaChIdx] = channelOutputs[DeltaChIdx]; // MemoChOutputs[] is used to compute Deltas
     //Compute ECC
     Fut24BitPcmPacket.Ecc = 0;
     for(uint8_t BitIdx = 0; BitIdx < 16; BitIdx++)
@@ -329,7 +346,7 @@ void FutabaPcm1024_buildHalfRadioPcmBitStream(void)
   for(PacketIdx = 0; PacketIdx < (FUT_PCM_PACKETS_PER_FRAME / 2); PacketIdx++)
   {
     Futaba.Pcm1024.BuildNblIdx--;
-    BitCnt = PcmStreamGetConsecBitNb(Futaba.Pcm1024.BuildNblIdx); // Retrieve last BitCnt in case subsequent bit(s) is(are) identical
+    BitCnt = PcmStreamGetConsecBitNb(!Futaba.Pcm1024.IsrBufIdx, Futaba.Pcm1024.BuildNblIdx); // Retrieve last BitCnt in case subsequent bit(s) is(are) identical
 
     for(BitIdx = (FUT_40_BIT_RADIO_PCM_PACKET_BIT_NB - 1); BitIdx < 255; BitIdx--)
     {
@@ -340,16 +357,16 @@ void FutabaPcm1024_buildHalfRadioPcmBitStream(void)
       }
       else
       {
-        PcmStreamSetConsecBitNb(Futaba.Pcm1024.BuildNblIdx++, BitCnt);
+        PcmStreamSetConsecBitNb(!Futaba.Pcm1024.IsrBufIdx, Futaba.Pcm1024.BuildNblIdx++, BitCnt);
         Futaba.Pcm1024.BitVal = !Futaba.Pcm1024.BitVal;
         BitCnt = 1;
       }
     }
-    PcmStreamSetConsecBitNb(Futaba.Pcm1024.BuildNblIdx++, BitCnt); // Last bit(s)
+    PcmStreamSetConsecBitNb(!Futaba.Pcm1024.IsrBufIdx, Futaba.Pcm1024.BuildNblIdx++, BitCnt); // Last bit(s)
   }
   if(!(Futaba.Pcm1024.PacketIdx % FUT_PCM_PACKETS_PER_FRAME))
   {
-    Futaba.Pcm1024.BuildEndNblIdx = Futaba.Pcm1024.BuildNblIdx - 1; // Used by ISR to ask main to compute FUT_PCM1024_BUILD_2_LAST_PACKETS
+    Futaba.Pcm1024.BuildEndNblIdx[!Futaba.Pcm1024.IsrBufIdx] = Futaba.Pcm1024.BuildNblIdx - 1; // Used by ISR for frame lenght
   }
   if(Futaba.Pcm1024.BuildState == FUT_PCM1024_BUILD_2_LAST_PACKETS)
   {
@@ -394,19 +411,19 @@ static uint8_t DeltaUsToDeltaCode(int16_t DeltaUs) // DeltaUs = NewWidthUs - Pre
   return(Idx);
 }
 
-static inline void PcmStreamSetConsecBitNb(uint8_t NblIdx, uint8_t ConsecBitNb)
+static inline void PcmStreamSetConsecBitNb(uint8_t BufIdx, uint8_t NblIdx, uint8_t ConsecBitNb)
 {
   if(NblIdx <= PCM_NBL_MAX_IDX)
   {
-    if(NblIdx & 1) Futaba.Pcm1024.StreamConsecBitTbl[NblIdx / 2].LowNibbleBitNb  = ConsecBitNb;
-    else           Futaba.Pcm1024.StreamConsecBitTbl[NblIdx / 2].HighNibbleBitNb = ConsecBitNb;
+    if(NblIdx & 1) Futaba.Pcm1024.StreamConsecBitTbl[BufIdx][NblIdx / 2].LowNibbleBitNb  = ConsecBitNb;
+    else           Futaba.Pcm1024.StreamConsecBitTbl[BufIdx][NblIdx / 2].HighNibbleBitNb = ConsecBitNb;
   }
 }
 
-static inline uint8_t PcmStreamGetConsecBitNb(uint8_t NblIdx)
+static inline uint8_t PcmStreamGetConsecBitNb(uint8_t BufIdx, uint8_t NblIdx)
 {
-  if(NblIdx & 1) return(Futaba.Pcm1024.StreamConsecBitTbl[NblIdx / 2].LowNibbleBitNb);
-  else           return(Futaba.Pcm1024.StreamConsecBitTbl[NblIdx / 2].HighNibbleBitNb);
+  if(NblIdx & 1) return(Futaba.Pcm1024.StreamConsecBitTbl[BufIdx][NblIdx / 2].LowNibbleBitNb);
+  else           return(Futaba.Pcm1024.StreamConsecBitTbl[BufIdx][NblIdx / 2].HighNibbleBitNb);
 }
 #if 0
 /*
@@ -447,7 +464,7 @@ static uint16_t PROTO_FUTPCM1K_cb2() // Needs to be renamed PROTO_FUTABA_PCM1024
     return *RptrB++;
 }
 #endif
-static uint8_t Ph=0;
+
 void PROTO_FUTPCM1K_cb1() // Needs to be renamed PROTO_FUTABA_PCM1024_cb1()
 {
 #if 0
@@ -467,26 +484,17 @@ uint16_t half_us = PROTO_FUTPCM1K_cb2();
   uint8_t  ConsecBitNb;
   uint16_t half_us;
 
-  ConsecBitNb = PcmStreamGetConsecBitNb(Futaba.Pcm1024.TxNblIdx);
+  ConsecBitNb = PcmStreamGetConsecBitNb(Futaba.Pcm1024.IsrBufIdx, Futaba.Pcm1024.TxNblIdx);
   half_us = (uint16_t)pgm_read_word_far(&ConsecBitDurationHalfUs[ConsecBitNb]); // Use pre-computed values
   OCR1B  += half_us;
-  if(Futaba.Pcm1024.TxNblIdx == HALF_TX_NBL_IDX)
+  if(Futaba.Pcm1024.TxNblIdx >= Futaba.Pcm1024.BuildEndNblIdx[Futaba.Pcm1024.IsrBufIdx])
   {
-Ph=!Ph;
-//if(1) {Xany_scheduleTx_AllInstance();}
-    Futaba.Pcm1024.BuildState = FUT_PCM1024_BUILD_2_FIRST_PACKETS;
-    // Schedule next Mixer calculations at around the middle of the buffer transmission
+		Futaba.Pcm1024.TxNblIdx = 255; // Will become 0 after incrementation
+		Futaba.Pcm1024.BuildEndNblIdx[Futaba.Pcm1024.IsrBufIdx] = 0; // Free marker
+		Futaba.Pcm1024.IsrBufIdx = !Futaba.Pcm1024.IsrBufIdx; // Buffer Flip
+    // Schedule next Mixer calculations.
     SCHEDULE_MIXER_END_IN_US(FUT_PCM1024_FRAME_PERIOD_US);
     heartbeat |= HEART_TIMER_PULSES;
-//	Xany_scheduleTx_AllInstance();
-  }
-  else
-  {
-    if(Futaba.Pcm1024.TxNblIdx >= Futaba.Pcm1024.BuildEndNblIdx)
-    {
-      Futaba.Pcm1024.TxNblIdx = 255; // Will become 0 after incrementation
-      Futaba.Pcm1024.BuildState = FUT_PCM1024_BUILD_2_LAST_PACKETS;
-    }
   }
   Futaba.Pcm1024.TxNblIdx++;
 }
@@ -514,10 +522,12 @@ static void PROTO_FUTPCM1K_initialize() // Needs to be renamed PROTO_FUTABA_PCM1
   Futaba.Pcm1024.PacketIdx      = 0;
   Futaba.Pcm1024.BitVal         = 0;
   Futaba.Pcm1024.BuildNblIdx    = 0;
-  Futaba.Pcm1024.BuildEndNblIdx = PCM_NBL_MAX_IDX;
+  Futaba.Pcm1024.IsrBufIdx      = 0;
+  Futaba.Pcm1024.BuildEndNblIdx[ Futaba.Pcm1024.IsrBufIdx] = PCM_NBL_MAX_IDX;
+  Futaba.Pcm1024.BuildEndNblIdx[!Futaba.Pcm1024.IsrBufIdx] = 0;
   Futaba.Pcm1024.TxNblIdx       = HALF_TX_NBL_IDX;
   memset(&Futaba.Pcm1024.StreamConsecBitTbl, 0x22, sizeof(Futaba.Pcm1024.StreamConsecBitTbl));
-
+	FutabaPcm1024_updateXanyChMap();
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
     ocr1b_function_ptr = PROTO_FUTPCM1K_cb1; // Setup function pointer used in ISR.
 /* vvv This cfg needs to be checked vvv */
@@ -528,11 +538,10 @@ static void PROTO_FUTPCM1K_initialize() // Needs to be renamed PROTO_FUTABA_PCM1
 /* ^^^ This cfg needs to be checked ^^^ */
 
     OCR1B = TCNT1 + (FUT_PCM1024_FRAME_PERIOD_US *2);
-    TIFR1 |= 1<<OCF1B; // Reset Flag.
+    TIFR1  |= 1<<OCF1B;  // Reset Flag.
     TIMSK1 |= 1<<OCIE1B; // Enable Output Compare interrupt.
   }
 }
-
 
 const void * PROTO_FUTPCM1K_Cmds(enum ProtoCmds cmd) // Needs to be renamed PROTO_FUTABA_PCM1024_Cmds()
 {
@@ -557,3 +566,4 @@ const void * PROTO_FUTPCM1K_Cmds(enum ProtoCmds cmd) // Needs to be renamed PROT
   }
   return 0;
 }
+

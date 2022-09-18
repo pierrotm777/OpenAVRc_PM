@@ -76,6 +76,7 @@ extern bool RTCLOCK;//defaults to NO
 extern bool SPORT_FILE_LOG;//defaults to NO
 extern bool PPM;//defaults to YES
 extern wxString SERIAL_PROTOCOL;//defaults to NO
+extern wxString PCM_PROTOCOL;//defaults to NO
 extern bool CC2500;//defaults to NO
 extern bool CYRF6936;//defaults to NO
 extern bool NRF24l01;//defaults to NO
@@ -85,7 +86,6 @@ extern wxString CC2500PAG;//defaults to 0
 extern wxString CYRF6936PAG;//defaults to 0
 extern wxString NRF24l01PAG;//defaults to 0
 extern wxString A7105PAG;//defaults to 0
-extern wxString SX1276PAG;//defaults to 0
 
 extern bool SD_CARD;//defaults to NO
 extern bool FAS_OFFSET;//defaults to NO
@@ -120,6 +120,7 @@ extern bool FRAM;
 extern wxString BLUETOOTH;
 extern bool XMODEM;
 extern bool PERSONAMES;
+extern bool DBLGAZSTICK;
 extern wxString OTHERCOMPOPTIONS;
 
 // Sticks
@@ -143,6 +144,10 @@ extern wxString encoderNo;
 extern wxString switchXD0;
 extern wxString switchXD1;
 extern wxString switchXD2;
+extern wxString stickRud;
+extern wxString stickEle;
+extern wxString stickThr;
+extern wxString stickAil;
 
 //X ANY
 extern wxString NUMXANY;
@@ -179,6 +184,7 @@ public:
     wxCheckBox* CheckBoxCORRECT_NEGATIVE_VALUES;
     wxCheckBox* CheckBoxCURVES;
     wxCheckBox* CheckBoxCYRF6936;
+    wxCheckBox* CheckBoxDBLGAZSTICK;
     wxCheckBox* CheckBoxDBLKEYS;
     wxCheckBox* CheckBoxEEPROM_PROGRESS_BAR;
     wxCheckBox* CheckBoxFLIGHT_MODES;
@@ -210,7 +216,6 @@ public:
     wxCheckBox* CheckBoxWS_HOW_HIGH;
     wxCheckBox* CheckBoxXMODEM;
     wxChoice* ChoiceA7105PAG;
-    wxChoice* ChoiceSX1276PAG;
     wxChoice* ChoiceBLUETOOTH;
     wxChoice* ChoiceCC2500PAG;
     wxChoice* ChoiceCYRF6936PAG;
@@ -223,6 +228,7 @@ public:
     wxChoice* ChoiceNRF24l01PAG;
     wxChoice* ChoiceNUMXANY;
     wxChoice* ChoicePCB;
+    wxChoice* ChoicePCM_PROTOCOL;
     wxChoice* ChoicePPM_UNIT ;
     wxChoice* ChoiceSERIAL_PROTOCOL;
     wxChoice* ChoiceTHREE_POS;
@@ -230,12 +236,16 @@ public:
     wxChoice* ChoiceTTS;
     wxChoice* ChoiceUNITS;
     wxChoice* ChoiceVOICE;
+    wxComboBox* ComboBoxAil;
+    wxComboBox* ComboBoxEle;
     wxComboBox* ComboBoxEncodeurA;
     wxComboBox* ComboBoxEncodeurB;
     wxComboBox* ComboBoxEncodeurNo;
     wxComboBox* ComboBoxID0;
     wxComboBox* ComboBoxID1;
     wxComboBox* ComboBoxID2;
+    wxComboBox* ComboBoxRud;
+    wxComboBox* ComboBoxThr;
     wxComboBox* ComboBoxXD0;
     wxComboBox* ComboBoxXD1;
     wxComboBox* ComboBoxXD2;
@@ -255,6 +265,7 @@ public:
     wxStaticBox* StaticBox11;
     wxStaticBox* StaticBox12;
     wxStaticBox* StaticBox13;
+    wxStaticBox* StaticBox14;
     wxStaticBox* StaticBox1;
     wxStaticBox* StaticBox2;
     wxStaticBox* StaticBox3;
@@ -275,6 +286,7 @@ public:
     wxStaticText* StaticText18;
     wxStaticText* StaticText19;
     wxStaticText* StaticText1;
+    wxStaticText* StaticText200;
     wxStaticText* StaticText20;
     wxStaticText* StaticText21;
     wxStaticText* StaticText22;
@@ -288,6 +300,10 @@ public:
     wxStaticText* StaticText2;
     wxStaticText* StaticText30;
     wxStaticText* StaticText31;
+    wxStaticText* StaticText32;
+    wxStaticText* StaticText33;
+    wxStaticText* StaticText34;
+    wxStaticText* StaticText35;
     wxStaticText* StaticText3;
     wxStaticText* StaticText4;
     wxStaticText* StaticText5;
@@ -354,7 +370,6 @@ protected:
     static const long ID_STATICBOX1;
     static const long ID_STATICBOX9;
     static const long ID_CHOICECC2500PAG;
-    static const long ID_CHOICESX1276PAG;
     static const long ID_CHOICEA7105PAG;
     static const long ID_CHOICENRF24l01PAG;
     static const long ID_CHECKBOXNOANDSECONDE;
@@ -388,12 +403,20 @@ protected:
     static const long ID_CHECKBOX34;
     static const long ID_CHOICEBLUETOOTH;
     static const long ID_STATICTEXT30;
+    static const long ID_PROTOPCMCHOICE;
     static const long ID_PROTOSERIALCHOICE;
+    static const long ID_STATICTEXT200;
     static const long ID_STATICTEXT31;
     static const long ID_PANEL3;
     static const long ID_STATICBOX7;
+    static const long ID_STATICBOX14;
+    static const long ID_CHECKBOX11;
+    static const long ID_COMBOBOX18;
+    static const long ID_STATICTEXT35;
+    static const long ID_COMBOBOX16;
+    static const long ID_STATICTEXT33;
+    static const long ID_STATICTEXT34;
     static const long ID_STATICBOX10;
-    static const long ID_STATICBOX8;
     static const long ID_COMBOBOX12;
     static const long ID_COMBOBOX1;
     static const long ID_BUTTON5;
@@ -413,7 +436,9 @@ protected:
     static const long ID_BUTTON7;
     static const long ID_STATICTEXT25;
     static const long ID_STATICTEXT19;
-    static const long ID_COMBOBOX14;
+    static const long ID_COMBOBOX17;
+    static const long ID_COMBOBOX19;
+    static const long ID_COMBOBOX20;
     static const long ID_COMBOBOX15;
     static const long ID_COMBOBOX13;
     static const long ID_COMBOBOX7;
@@ -430,6 +455,8 @@ protected:
     static const long ID_STATICTEXT23;
     static const long ID_STATICBOX12;
     static const long ID_TEXTCTRL1;
+    static const long ID_STATICTEXT32;
+    static const long ID_STATICBOX8;
     static const long ID_PANEL4;
     static const long ID_STATICBOX11;
     static const long ID_BUTTON8;

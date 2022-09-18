@@ -1509,7 +1509,7 @@ void OpenAVRcInit(uint8_t mcusr)
 #endif
 #endif
 
-#if (PCM_PROTOCOL==FUTPCM1K)//defined(PROTO_FUT_PCM_1024)
+#if (PCM_PROTOCOL==FUTPCM1K)
   Futaba.Pcm1024.BuildState = FUT_PCM1024_BUILD_DO_NOTHING; // In case Futaba PCM1024 is not the selected protocol
 #endif
 

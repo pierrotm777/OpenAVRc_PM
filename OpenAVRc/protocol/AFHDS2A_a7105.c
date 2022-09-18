@@ -85,25 +85,33 @@ static void AFHDS2A_calc_channels()
  while (idx < AFHDS2A_NUMFREQ)
   {
    uint8_t i;
-   uint8_t  band_no = ((((idx<<1) | ((idx>>1) & 0b01)) + temp_rfid_addr_p2M[3]) & 0b11);
+   uint8_t count_1_42 = 0, count_43_85 = 0, count_86_128 = 0, count_129_168 = 0;
    rnd = rnd * 0x0019660D + 0x3C6EF35F; // Randomization
 
-   uint8_t next_ch = band_no*41 + 1 + ((rnd >> idx) % 41); // Channel range: 1..164
-
-		for (i = 0; i < idx; i++)
-		{
-			// Keep the distance 5 between the channels
-			uint8_t distance;
-			if (next_ch > channel_used_p2M[i])
-				distance = next_ch - channel_used_p2M[i];
-			else
-				distance = channel_used_p2M[i] - next_ch;
-
-			if (distance < 5) break;
-		}
-
-		if (i != idx) continue;
-
+   uint8_t next_ch = ((rnd >> (idx%32)) % 0xa8) + 1;
+   // Keep the distance 2 between the channels - either odd or even
+   if (((next_ch ^ temp_rfid_addr_p2M[0]) & 0x01 )== 0)
+    continue;
+   // Check that it's not duplicate and spread uniformly
+   for (i = 0; i < idx; i++)
+    {
+     if(channel_used_p2M[i] == next_ch)
+      break;
+     if(channel_used_p2M[i] <= 42)
+      count_1_42++;
+     else if (channel_used_p2M[i] <= 85)
+      count_43_85++;
+     else if (channel_used_p2M[i] <= 128)
+      count_86_128++;
+     else
+      count_129_168++;
+    }
+   if (i != idx)
+    continue;
+   if ((next_ch <= 42 && count_1_42 < 5)
+       ||(next_ch >= 43 && next_ch <= 85 && count_43_85 < 5)
+       ||(next_ch >= 86 && next_ch <=128 && count_86_128 < 5)
+       ||(next_ch >= 129 && count_129_168 < 5))
     channel_used_p2M[idx++] = next_ch;
   }
 }
@@ -158,7 +166,7 @@ static void AFHDS2A_build_packet(uint8_t type)
      int16_t value = (FULL_CHANNEL_OUTPUTS(ch))/2; // +-1280 to +-640
      value += PPM_CENTER; // + 1500 offset
      value = limit((int16_t)-860, value, (int16_t)+2140);
-     packet_p2M[9 +  ch*2] = value;
+     packet_p2M[9 +  ch*2] = value&0xFF;
      packet_p2M[10 + ch*2] = (value>>8)&0xFF;
     }
    break;
@@ -250,7 +258,7 @@ static uint16_t AFHDS2A_cb()
 {
  heartbeat |= HEART_TIMER_PULSES;
 
- uint8_t data_rx=0;
+ uint8_t data_rx;
 
  A7105_AdjustLOBaseFreq();
 

@@ -54,21 +54,29 @@ union PcmStreamBitNbCouple_Union
 
 typedef struct{
   uint8_t
-           BuildState:   4, // 0: Nothing to do, 1: Channels 0 & 1 or 4 & 5 , 2: Channels 2 & 3 or 6 & 7
-           PacketIdx:    3,
-           BitVal:       1;
-  uint8_t  BuildNblIdx;
-  uint8_t  BuildEndNblIdx; // For the ISR to know PCM frame is fully sent
-  uint8_t  TxNblIdx;
-  int16_t  MemoChOutputs[FUT_PCM1024_PROP_CH_NB]; // Used to compute Deltas
-  PcmStreamBitNbCouple_Union StreamConsecBitTbl[PCM_STREAM_BYTE_NB]; // Will be volatile (use in Tx Output Compare Interrupt)
+					BuildState:   3, // 0: Nothing to do, 1: Channels 0 & 1 or 4 & 5 , 2: Channels 2 & 3 or 6 & 7
+					PacketIdx:    3,
+					IsrBufIdx:    1,
+					BitVal:       1;
+  uint8_t BuildNblIdx;
+  uint8_t BuildEndNblIdx[2]; // For the ISR to know PCM frame is fully sent
+  uint8_t TxNblIdx;
+	uint8_t XanyChMap; // One bit per Channel (8 channels max from bit0 to bit7)
+  int16_t MemoChOutputs[FUT_PCM1024_PROP_CH_NB]; // Used to compute Deltas
+  PcmStreamBitNbCouple_Union StreamConsecBitTbl[2][PCM_STREAM_BYTE_NB]; // Double buffering (One buffer is filled during the other is transmitting)
 }FutPcm1024St_t;
 
+#if 0
 typedef struct{
   FutPcm1024St_t Pcm1024;
 }FutabaSt_t;
+#endif
+
+#define Futaba    pulses2MHz // Just for readability (Futaba PCM1024 structure is an union of pulses2MHz buffer)
 
 /* PUBLIC FUNCTION PROTOTYPES */
 void FutabaPcm1024_buildHalfRadioPcmBitStream(void); // SHALL be called as often as possible in the main loop
+
+void FutabaPcm1024_updateXanyChannels(void);
 
 #endif // FUTABA_PCM1024_H
