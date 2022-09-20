@@ -634,6 +634,7 @@ CompilerOptionsFrame::CompilerOptionsFrame(wxWindow* parent,wxWindowID id,const 
 
   ChoicePCM_PROTOCOL->Append("NO");
   ChoicePCM_PROTOCOL->Append("FUTPCM1K");
+  ChoicePCM_PROTOCOL->Append("GRAPCM1K");
 
 ///////////////////////// End of avoid compilation option translation ///////////////////
 
