@@ -30,76 +30,13 @@
 **************************************************************************
 */
 
+#ifndef GRAUPNER_PCM1024_H
+#define GRAUPNER_PCM1024_H
 
-#ifndef PULSES_COMMON_H
-#define PULSES_COMMON_H
+#define GRA_PCM1024_PROP_CH_NB       8
 
-#define SCHEDULE_MIXER_END_IN_US(delay_us) nextMixerEndTime = getTmr64uS() + US_TO_64US_TICK(delay_us) - US_TO_64US_TICK(400) // 400 uS
+#define GRA_PCM1024_FRAME_PERIOD_US  44000U
 
-#define IS_WAIT_PUPIL_STATE()       ((g_model.rfProtocol == (PROTOCOL_PPM16)) || (g_model.rfProtocol == (PROTOCOL_PPMSIM)))
 
-#define IS_PPM_PROTOCOL(protocol)          (protocol<=PROTOCOL_PPMSIM)
 
-#if (PCM_PROTOCOL==FUTPCM1K)
-  #define IS_FUTPCM1K_PROTOCOL(protocol)  (protocol==PROTOCOL_FUTPCM1K)
-#else
-  #define IS_FUTPCM1K_PROTOCOL(protocol)  (0)
-#endif
-
-#if (PCM_PROTOCOL==GRAPCM1K)
-  #define IS_GRAPCM1K_PROTOCOL(protocol)  (protocol==PROTOCOL_GRAPCM1K)
-#else
-  #define IS_GRAPCM1K_PROTOCOL(protocol)  (0)
-#endif
-
-#if (SERIAL_PROTOCOL==DSM)
-  #define IS_DSM2_SERIAL_PROTOCOL(protocol)  (protocol==PROTOCOL_DSM_SERIAL)
-#else
-  #define IS_DSM2_SERIAL_PROTOCOL(protocol)  (0)
-#endif
-
-#if (SERIAL_PROTOCOL==MULTIMODULE)
-  #define IS_MULTIMODULE_PROTOCOL(protocol)  (protocol==PROTOCOL_MULTI)
-#else
-  #define IS_MULTIMODULE_PROTOCOL(protocol)  (0)
-#endif
-
-#if (SERIAL_PROTOCOL==CRSF)
-  #define IS_CRSF_PROTOCOL(protocol)  (protocol==PROTOCOL_CRSF)
-#else
-  #define IS_CRSF_PROTOCOL(protocol)  (0)
-#endif
-
-#if (SERIAL_PROTOCOL==SBUS)
-  #define IS_SBUS_PROTOCOL(protocol)  (protocol==PROTOCOL_SBUS)
-#else
-  #define IS_SBUS_PROTOCOL(protocol)  (0)
-#endif
-
-#if (SERIAL_PROTOCOL==SUMD)
-  #define IS_SUMD_PROTOCOL(protocol)  (protocol==PROTOCOL_SUMD)
-#else
-  #define IS_SUMD_PROTOCOL(protocol)  (0)
-#endif
-
-#if defined(SPIMODULES)
- #if (SERIAL_PROTOCOL==MULTIMODULE)
-  #define LASTPROTOMENU1 PROTOCOL_MULTI+1
- #elif (SERIAL_PROTOCOL==CRSF)
-  #define LASTPROTOMENU1 PROTOCOL_CRSF+1
- #elif (SERIAL_PROTOCOL==SBUS)
-  #define LASTPROTOMENU1 PROTOCOL_SBUS+1
- #elif (SERIAL_PROTOCOL==SUMD)
-  #define LASTPROTOMENU1 PROTOCOL_SUMD+1
- #elif (SERIAL_PROTOCOL==DSM)
-  #define LASTPROTOMENU1 PROTOCOL_DSM_SERIAL+1
- #else
-  #define LASTPROTOMENU1 PROTOCOL_PPMSIM+1
- #endif
- #define IS_SPIMODULES_PROTOCOL(protocol)  (protocol>=LASTPROTOMENU1)
-#else
- #define IS_SPIMODULES_PROTOCOL(protocol)  (0)
- #define LASTPROTOMENU1 PROTOCOL_COUNT-1
-#endif
-
-#endif
+#endif // GRAUPNER_PCM1024_H

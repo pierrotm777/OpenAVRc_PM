@@ -514,9 +514,9 @@ static void PROTO_FUTPCM1K_reset() // Needs to be renamed PROTO_FUTABA_PCM1024_r
 
 static void PROTO_FUTPCM1K_initialize() // Needs to be renamed PROTO_FUTABA_PCM1024_initialize()
 {
-#if defined(FRSKY)
-  telemetryPPMInit();
-#endif
+//if defined(FRSKY)
+//  telemetryPPMInit();
+//#endif
 
   Futaba.Pcm1024.BuildState     = FUT_PCM1024_BUILD_DO_NOTHING;
   Futaba.Pcm1024.PacketIdx      = 0;

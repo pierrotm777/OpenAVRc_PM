@@ -85,6 +85,7 @@ void menuModelSetup(uint8_t event)
 #define CURSOR_ON_CELL         (true)
 #define MODEL_SETUP_MAX_LINES  (IS_PPM_PROTOCOL(protocol)) ? ITEM_MODEL_PROTOCOL_PARAMS_LINE_1+2 : \
  (IS_FUTPCM1K_PROTOCOL(protocol)) ? ITEM_MODEL_PROTOCOL_PARAMS_LINE_1+3 : \
+ (IS_GRAPCM1K_PROTOCOL(protocol)) ? ITEM_MODEL_PROTOCOL_PARAMS_LINE_1+3 : \
  (IS_DSM2_SERIAL_PROTOCOL(protocol)) ? ITEM_MODEL_PROTOCOL_PARAMS_LINE_2+2 : \
  (IS_MULTIMODULE_PROTOCOL(protocol)) ? ITEM_MODEL_PROTOCOL_PARAMS_LINE_5+2 :  \
  (IS_CRSF_PROTOCOL(protocol)) ? ITEM_MODEL_PROTOCOL_PARAMS_LINE_1+3 :  \
@@ -409,14 +410,31 @@ void menuModelSetup(uint8_t event)
             }
           }
         }
-#if (PCM_PROTOCOL!=NO)//(PCM_PROTOCOL==FUTPCM1K)
+#if (PCM_PROTOCOL==FUTPCM1K)
       if (IS_FUTPCM1K_PROTOCOL(protocol))
         {
 		     /*Frame line*/
          lcdDrawTextLeft(y, STR_PCMFRAME);
          lcdDrawText(MODEL_SETUP_2ND_COLUMN+3*FW, y, STR_MS);
-		     lcdDrawNumberNAtt(MODEL_SETUP_2ND_COLUMN, y, (int16_t)FUT_PCM1024_FRAME_PERIOD_US/100, (menuHorizontalPosition<=0 ? attr : 0) | PREC1|LEFT);
+		     lcdDrawNumberNAtt(MODEL_SETUP_2ND_COLUMN, y, (int16_t)FUT_PCM1024_FRAME_PERIOD_US/100, PREC1|LEFT, 4);
 		     lcdDrawTextAtIndex(MODEL_SETUP_2ND_COLUMN+7*FW+1, y, STR_NCHANNELS, FUT_PCM1024_PROP_CH_NB/4/*8CH*/, menuHorizontalPosition!=0 ? attr : 0);
+
+         /*Failsafe line*/
+         lcdDrawTextLeft(y+8, STR_PCMFAILSAFE);
+         lcdDrawSizedTextAtt(MODEL_SETUP_2ND_COLUMN, y+8, RfOptionSettings.rfSubTypeNames+4*g_model.rfSubType, 4, menuHorizontalPosition == 0 ? attr : 0);
+         if (attr && (editMode>0 || p1valdiff))
+          {
+           CHECK_INCDEC_MODELVAR_ZERO_STARTPULSES_IF_CHANGE(event, g_model.rfSubType, RfOptionSettings.rfSubTypeMax);
+          }
+        }
+#elif (PCM_PROTOCOL==GRAPCM1K)
+      if (IS_GRAPCM1K_PROTOCOL(protocol))
+        {
+		     /*Frame line*/
+         lcdDrawTextLeft(y, STR_PCMFRAME);
+         lcdDrawText(MODEL_SETUP_2ND_COLUMN+3*FW, y, STR_MS);
+		     lcdDrawNumberNAtt(MODEL_SETUP_2ND_COLUMN, y, /*(int16_t)GRA_PCM1024_FRAME_PERIOD_US/100*/44, LEFT, 2);
+		     lcdDrawTextAtIndex(MODEL_SETUP_2ND_COLUMN+7*FW+1, y, STR_NCHANNELS, GRA_PCM1024_PROP_CH_NB/4/*8CH*/, menuHorizontalPosition!=0 ? attr : 0);
 
          /*Failsafe line*/
          lcdDrawTextLeft(y+8, STR_PCMFAILSAFE);

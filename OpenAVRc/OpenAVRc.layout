@@ -2,74 +2,9 @@
 <CodeBlocks_layout_file>
 	<FileVersion major="1" minor="0" />
 	<ActiveTarget name="Release" />
-	<File name="Makefile" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="gui\widgets.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="0" topLine="123" />
-		</Cursor>
-	</File>
-	<File name="pulses\pulses_avr.h" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2294" topLine="58" />
-		</Cursor>
-	</File>
-	<File name="OpenAVRc.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="7046" topLine="271" />
-		</Cursor>
-	</File>
-	<File name="protocol\misc.h" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4438" topLine="96" />
-		</Cursor>
-	</File>
-	<File name="protocol\protocol.h" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2820" topLine="28" />
-		</Cursor>
-	</File>
-	<File name="Xany.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="13" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="mixer.cpp" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="31446" topLine="777" />
-		</Cursor>
-	</File>
-	<File name="OpenAVRc.cpp" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="41035" topLine="1500" />
-		</Cursor>
-	</File>
-	<File name="gui\menu_model_setup.cpp" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="16615" topLine="410" />
-		</Cursor>
-	</File>
-	<File name="protocol\PROTO_FUTPCM1K.cpp" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="26129" topLine="517" />
-		</Cursor>
-	</File>
-	<File name="protocol\DSM_cyrf6936.c" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="3618" topLine="150" />
-		</Cursor>
-	</File>
-	<File name="pulses\pulses.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2567" topLine="34" />
-		</Cursor>
-	</File>
-	<File name="protocol\FUTABA_PCM1024.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="3339" topLine="37" />
-		</Cursor>
-	</File>
-	<File name="main_avr.cpp" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2304" topLine="21" />
+			<Cursor1 position="5288" topLine="81" />
 		</Cursor>
 	</File>
 	<File name="protocol\misc.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -77,19 +12,39 @@
 			<Cursor1 position="4567" topLine="79" />
 		</Cursor>
 	</File>
+	<File name="protocol\PROTO_GRAPCM1K.cpp" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2259" topLine="21" />
+		</Cursor>
+	</File>
+	<File name="gui\menu_model_setup.cpp" open="1" top="1" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="16424" topLine="423" />
+		</Cursor>
+	</File>
+	<File name="Makefile" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2932" topLine="134" />
+		</Cursor>
+	</File>
 	<File name="protocol\FRSKYD_cc2500.c" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="4181" topLine="345" />
 		</Cursor>
 	</File>
-	<File name="pulses\pulses_avr.cpp" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="bluetooth.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="0" topLine="121" />
+			<Cursor1 position="29816" topLine="856" />
 		</Cursor>
 	</File>
-	<File name="Xany.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="mixer.cpp" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2904" topLine="27" />
+			<Cursor1 position="31446" topLine="777" />
+		</Cursor>
+	</File>
+	<File name="protocol\PROTO_FUTPCM1K.cpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2240" topLine="15" />
 		</Cursor>
 	</File>
 	<File name="protocol\PROTO_PPM.cpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -97,9 +52,89 @@
 			<Cursor1 position="4740" topLine="105" />
 		</Cursor>
 	</File>
+	<File name="gui\menu_general_trainer.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="5054" topLine="100" />
+		</Cursor>
+	</File>
+	<File name="telemetry\frsky.cpp" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2268" topLine="25" />
+		</Cursor>
+	</File>
+	<File name="OpenAVRc.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="7046" topLine="271" />
+		</Cursor>
+	</File>
+	<File name="Xany.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="13" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="pulses\pulses.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2860" topLine="34" />
+		</Cursor>
+	</File>
+	<File name="protocol\protocol.h" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2975" topLine="28" />
+		</Cursor>
+	</File>
+	<File name="pulses\pulses_avr.h" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2294" topLine="61" />
+		</Cursor>
+	</File>
 	<File name="protocol\interface.h" open="0" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2431" topLine="26" />
+			<Cursor1 position="2592" topLine="26" />
+		</Cursor>
+	</File>
+	<File name="gui\lcd.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="24166" topLine="951" />
+		</Cursor>
+	</File>
+	<File name="Xany.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2904" topLine="27" />
+		</Cursor>
+	</File>
+	<File name="pulses\pulses_avr.cpp" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="39" />
+		</Cursor>
+	</File>
+	<File name="gui\view_telemetry.cpp" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3351" topLine="69" />
+		</Cursor>
+	</File>
+	<File name="protocol\FUTABA_PCM1024.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2350" topLine="20" />
+		</Cursor>
+	</File>
+	<File name="OpenAVRc.cpp" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="41035" topLine="1500" />
+		</Cursor>
+	</File>
+	<File name="protocol\DSM_cyrf6936.c" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3618" topLine="150" />
+		</Cursor>
+	</File>
+	<File name="main_avr.cpp" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2304" topLine="21" />
+		</Cursor>
+	</File>
+	<File name="protocol\misc.h" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4438" topLine="96" />
 		</Cursor>
 	</File>
 </CodeBlocks_layout_file>

@@ -31,92 +31,73 @@
 */
 
 
-#ifndef _INTERFACE_H_
-#define _INTERFACE_H_
+#include "../OpenAVRc.h"
 
-#include "misc.h"
+#include "GRAUPNER_PCM1024.h"
 
-#if defined(CPUM2560)
-#include "PROTO_PPM.cpp"
-#include "PROTO_PPM16.cpp"
-#include "PROTO_PPMSIM.cpp"
-#endif
+#define TR_PCMFRAME            "Trame PCM"
+const pm_char STR_PCMFRAME[] PROGMEM = TR_PCMFRAME;
 
-#if (PCM_PROTOCOL==FUTPCM1K)
-#include "FUTABA_PCM1024.h"
-#include "PROTO_FUTPCM1K.cpp"
-#elif (PCM_PROTOCOL==GRAPCM1K)
-#include "PROTO_GRAPCM1K.cpp"
-#endif
+#define TR_PCMFAILSAFE            "Failsafe"
+const pm_char STR_PCMFAILSAFE[] PROGMEM = TR_PCMFAILSAFE;
+const pm_char STR_SUBTYPEFAILSAFE_GRAPCM1K[] PROGMEM = "  NO""HOLD""SAVE";
 
-#if defined(CPUXMEGA)
-#include "PROTO_xmega_PPM.cpp"
-#include "PROTO_xmega_PPMSIM.cpp"
-#include "PROTO_xmega_PPM16.cpp"
-#endif
+#define GRA_PCM1024_FRAME_PERIOD_US 44000U
+#define GRA_PCM1024_PROP_CH_NB      8
 
-// Serial protocols
-#if (SERIAL_PROTOCOL==DSM)
-#include "DSM_SERIAL.c"
-#elif (SERIAL_PROTOCOL==MULTIMODULE)
-#include "MULTI_SERIAL.c"
-#elif (SERIAL_PROTOCOL==CRSF)
-#include "CRSF_SERIAL.c"
-#elif (SERIAL_PROTOCOL==SBUS)
-#include "SBUS_SERIAL.c"
-#elif (SERIAL_PROTOCOL==SUMD)
-#include "SUMD_SERIAL.c"
-#endif
+static uint8_t GRAPCM1K_Failsafe_Value()
+{
+	return g_model.rfSubType;
+}
 
-#if defined(SPIMODULES)
+const static RfOptionSettingsvar_t RfOpt_GRAPCM1K_Ser[] PROGMEM =
+{
+ /*rfProtoNeed*/0, //can be PROTO_NEED_SPI | BOOL1USED | BOOL2USED | BOOL3USED
+ /*rfSubTypeMax*/2,
+ /*rfOptionValue1Min*/0, // FREQFINE MIN
+ /*rfOptionValue1Max*/0,  // FREQFINE MAX
+ /*rfOptionValue2Min*/0,
+ /*rfOptionValue2Max*/0,
+ /*rfOptionValue3Max*/0,    // RF POWER
+};
 
-#ifdef PROTO_HAS_CC2500
-#include "iface_cc2500.h"
-#include "cc2500.c"
-#include "FRSKY_DEF_cc2500.cpp"
-#include "FRSKYV_cc2500.c"
-#include "FRSKYD_cc2500.c"
-#include "FRSKYX_cc2500.c"
-#include "SKYARTEC_cc2500.c"
-#include "CORONA_cc2500.c"
-#include "HITEC_cc2500.c"
-//#include "HOTT_cc2500.c"
-//#include "FUTABA_cc2500.c"
-#endif
+void PROTO_GRAPCM1K_cb1() // Needs to be renamed PROTO_FUTABA_PCM1024_cb1()
+{
 
-#ifdef PROTO_HAS_CYRF6936
-#include "iface_cyrf6936.h"
-#include "cyrf6936.c"
-#include "DEVO_cyrf6936.c"
-#include "DSM_cyrf6936.c"
-#include "J6PRO_cyrf6936.c"
-//#include "E129_cyrf6936.c"
-//#include "iface_rf2500.h"
-//#include "RF2500_EMU.c"
-#endif
+}
 
-#ifdef PROTO_HAS_A7105
-#include "iface_a7105.h"
-#include "a7105.c"
-#include "FLYSKY_a7105.c"
-#include "AFHDS2A_a7105.c"
-#include "HUBSAN_a7105.c"
-#endif
 
-#ifdef PROTO_HAS_NRF24L01
-#include "iface_nrf24l01.h"
-#include "nrf24l01.c"
-#include "BAYANG_nrf24l01.c"
-#include "CABELL_nrf24l01.c"
-#include "STANEK_nrf24l01.c"
-#endif
+static void PROTO_GRAPCM1K_reset() // Needs to be renamed PROTO_FUTABA_PCM1024_reset()
+{
 
-#ifdef PROTO_HAS_SX1276
-//#include "iface_sx1276.h"
-//#include "sx1276.c"
-//#include "FRSKYR9_sx1276.c"
-#endif // PROTO_HAS_SX1276
+}
 
-#endif
+static void PROTO_GRAPCM1K_initialize() // Needs to be renamed PROTO_FUTABA_PCM1024_initialize()
+{
 
-#endif // _INTERFACE_H_
+}
+
+const void * PROTO_GRAPCM1K_Cmds(enum ProtoCmds cmd) // Needs to be renamed PROTO_FUTABA_PCM1024_Cmds()
+{
+  switch(cmd) {
+    case PROTOCMD_INIT: PROTO_GRAPCM1K_initialize();
+    return 0;
+    case PROTOCMD_RESET:
+      PROTO_GRAPCM1K_reset();
+    return 0;
+  case PROTOCMD_GETOPTIONS:
+   SetRfOptionSettings(pgm_get_far_address(RfOpt_GRAPCM1K_Ser),
+                       STR_SUBTYPEFAILSAFE_GRAPCM1K, //Failsafe modes
+                       STR_DUMMY,      //Option 1 (int)
+                       STR_DUMMY,      //Option 2 (int)
+                       STR_DUMMY,      //Option 3 (uint 0 to 31)
+                       STR_DUMMY,      //OptionBool 1
+                       STR_DUMMY,      //OptionBool 2
+                       STR_DUMMY       //OptionBool 3
+                      );
+   return 0;
+  default: break;
+  }
+  return 0;
+}
+
