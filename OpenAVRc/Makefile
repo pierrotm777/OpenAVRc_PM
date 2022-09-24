@@ -1029,12 +1029,48 @@ ifeq ($(FAI), CHOICE)
   CPPDEFS += -DFAI_CHOICE
 endif
 
-ifneq ($(BLUETOOTH), NO)
+ifeq ($(BLUETOOTH), HC05)
   CPPDEFS += -DBLUETOOTH=$(BLUETOOTH)
   need_Serial1=YES
   need_uCli = YES
   GUIMODELSRC += gui/menu_general_bluetooth.cpp bluetooth.cpp
+else ifeq ($(BLUETOOTH), HM10)
+  CPPDEFS += -DBLUETOOTH=$(BLUETOOTH)
+  need_Serial1=YES
+  need_uCli = YES
+  GUIMODELSRC += gui/menu_general_bluetooth.cpp bluetooth_hm10.cpp
 endif
+
+
+
+ifeq ($(LCD), ST7565R)
+  CPPDEFS += -DLCD_ST7565R
+else ifeq ($(LCD), ERC12864FSF)
+  CPPDEFS += -DLCD_ERC12864FSF
+else ifeq ($(LCD), ST7920)
+  CPPDEFS += -DLCD_ST7920
+else ifeq ($(LCD), KS108)
+  CPPDEFS += -DLCD_KS108
+else ifeq ($(LCD), SSD1306)
+  CPPDEFS += -DLCD_SSD1306
+else ifeq ($(LCD), SH1106)
+  CPPDEFS += -DLCD_SH1106
+else ifeq ($(LCD), NT7538SPI)
+  CPPDEFS += -DLCD_NT7538SPI
+endif
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ifeq ($(XMODEM), YES)
   CPPDEFS += -DXMODEM
