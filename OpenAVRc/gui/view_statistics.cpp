@@ -33,12 +33,19 @@
 
 #include "menu_general.h"
 
+void startModelTracker();
+
+void startModelTracker()
+{
+
+}
+
 #define TELEM_2ND_COLUMN (10*FW)
 void displayGpsModel(uint8_t y, char direction, uint16_t bp, uint16_t ap)
 {
   IF_GPS_IS_FIXED {
     if (!direction) direction = '-';
-    lcdDrawNumberNAtt(TELEM_2ND_COLUMN, y, bp / 100, LEFT); // ddd before '.'
+    lcdDrawNumberNAtt(5*FW/*TELEM_2ND_COLUMN*/, y, bp / 100, LEFT); // ddd before '.'
     lcdDrawChar(lcdLastPos, y, '@');
     uint8_t mn = bp % 100; // TODO div_t
     if (g_eeGeneral.gpsFormat == 0) {
@@ -58,7 +65,7 @@ void displayGpsModel(uint8_t y, char direction, uint16_t bp, uint16_t ap)
       lcdDrawChar(lcdLastPos+1, y, direction);
     }  } else {
     // no fix
-    lcdDrawText(TELEM_2ND_COLUMN, y, STR_VCSWFUNC+1/*----*/);
+    lcdDrawText(5*FW/*TELEM_2ND_COLUMN*/, y, STR_VCSWFUNC+1/*----*/);
   }
 }
 
@@ -164,8 +171,12 @@ void menuStatisticsDebug(uint8_t event)
   lcd_status_line();
 }
 
-
-
+#define TR_LAT           		 "Lat:"
+extern const pm_char STR_LAT[];
+const pm_char STR_LAT[] PROGMEM = TR_LAT;
+#define TR_LON           		 "Lon:"
+extern const pm_char STR_LON[];
+const pm_char STR_LON[] PROGMEM = TR_LON;
 
 #define TR_SEARCHMODEL           CENTER TR_ENTER" Search Model"
 extern const pm_char STR_SEARCHMODEL[];
@@ -190,6 +201,7 @@ void menutModelTracker(uint8_t event)
     g_lcddraw_max = 0;
     maxMixerDuration  = 0;
     */
+    startModelTracker();
     AUDIO_KEYPAD_UP();
     break;
 
@@ -200,60 +212,33 @@ void menutModelTracker(uint8_t event)
     chainMenu(menuMainView);
     break;
   }
-/*
-#define COLDEBUG1 10*FW
-#define COLDEBUG2 15*FW
-#define COLDEBUG3 19*FW
-#define OFSDEBUG  3*FW
-
-  lcdDrawTextLeft(1*FH, STR_COMPUTE);
-  lcdDrawText(COLDEBUG1, 1*FH, STR_MAX);
-  lcdDrawText(COLDEBUG2, 1*FH, STR_MIN);
-
-  lcdDrawText(FW/2, 2*FH, STR_PROTOCOL);
-  lcdDrawNumberNAtt(COLDEBUG1+OFSDEBUG, 2*FH, (g_tmr1Latency_max/2), UNSIGN);
-  lcdDrawNumberNAtt(COLDEBUG2+OFSDEBUG, 2*FH, (g_tmr1Latency_min/2), UNSIGN);
-
-  lcdDrawText(FW/2, 3*FH, STR_GUIBUILD);
-  lcdDrawNumberNAtt(COLDEBUG1+OFSDEBUG, 3*FH, DURATION_MS_PREC2(g_guibuild_max), PREC2);
-  lcdDrawNumberNAtt(COLDEBUG2+OFSDEBUG, 3*FH, DURATION_MS_PREC2(g_guibuild_min), PREC2);
-
-  lcdDrawText(FW/2, 4*FH, STR_LCDDRAW);
-  lcdDrawNumberNAtt(COLDEBUG1+OFSDEBUG, 4*FH, DURATION_MS_PREC2(g_lcddraw_max), PREC2);
-  lcdDrawNumberNAtt(COLDEBUG2+OFSDEBUG, 4*FH, DURATION_MS_PREC2(g_lcddraw_min), PREC2);
-
-  lcdDrawText(FW/2, 5*FH, STR_MIXERlowcase);
-  lcdDrawNumberNAtt(COLDEBUG2+OFSDEBUG, 5*FH, DURATION_MS_PREC2(maxMixerDuration), PREC2);
-  lcdDrawText(FW/2, 6*FH, STR_FREESRAM);
-  lcdDrawNumberNAtt(COLDEBUG2+OFSDEBUG, 6*FH, stackAvailable(), UNSIGN);
-
-//  lcdDrawTextLeft(6*FH, STR_FREERAMINB);
-//  lcdDrawNumberNAtt(14*FW, 6*FH, freeRam(), UNSIGN);
-*/
-
 
   uint8_t line=1*FH+1;
 
-  // Latitude
-  lcdDrawTextLeft(line, STR_LATITUDE);
+  // Latitude du modèle
+  lcdDrawTextLeft(line, STR_LAT);
   displayGpsModel(line, telemetryData.value.gpsLatitudeNS, telemetryData.value.gpsLatitude_bp, telemetryData.value.gpsLatitude_ap);
-  // Longitude
+  // Longitude du modèle
   line+=1*FH+1;
-  lcdDrawTextLeft(line, STR_LONGITUDE);
+  lcdDrawTextLeft(line, STR_LON);
   displayGpsModel(line, telemetryData.value.gpsLongitudeEW, telemetryData.value.gpsLongitude_bp, telemetryData.value.gpsLongitude_ap);
-  //displayGpsTime();
+
   line+=1*FH+1;
+  //Altitude du modèle
   lcdDrawTextAtIndex(0, line, STR_VTELEMCHNS, TELEM_GPSALT, 0);
   lcdPutsTelemetryChannelValue(TELEM_2ND_COLUMN-2*FW, line, TELEM_GPSALT-1, telemetryData.value.gpsAltitude, 0);
-  lcdDrawTextAtIndex(TELEM_2ND_COLUMN+FW, line, STR_VTELEMCHNS, TELEM_SPEED, 0);
-  lcdPutsTelemetryChannelValue(LCD_W-3*FW, line, TELEM_SPEED-1, telemetryData.value.gpsSpeed_bp, 0);
+  //Vitesse du modèle
+  //lcdDrawTextAtIndex(TELEM_2ND_COLUMN+FW, line, STR_VTELEMCHNS, TELEM_SPEED, 0);
+  //lcdPutsTelemetryChannelValue(LCD_W-3*FW, line, TELEM_SPEED-1, telemetryData.value.gpsSpeed_bp, 0);
   line+=1*FH+1;
+  //Distance parcourue par le modèle
   lcdDrawTextAtIndex(0, line, STR_VTELEMCHNS, TELEM_DIST, 0);
   lcdPutsTelemetryChannelValue(TELEM_2ND_COLUMN-2*FW, line, TELEM_DIST-1, telemetryData.value.gpsDistance, 0);
-  lcdDrawTextAtIndex(TELEM_2ND_COLUMN+FW, line, STR_VTELEMCHNS, TELEM_HDG, 0);
-  lcdPutsTelemetryChannelValue(LCD_W-3*FW, line, TELEM_HDG-1, telemetryData.value.gpsCourse_bp, 0);
   line+=1*FH+1;
-
+  //Cap suivi par le modèle
+  lcdDrawTextAtIndex(0, line, STR_VTELEMCHNS, TELEM_HDG, 0);
+  lcdPutsTelemetryChannelValue(TELEM_2ND_COLUMN-2*FW, line, TELEM_HDG-1, telemetryData.value.gpsCourse_bp, 0);
+  line+=1*FH+1;
 
   lcdDrawText(4*FW, 7*FH+1, STR_SEARCHMODEL);
   lcd_status_line();
