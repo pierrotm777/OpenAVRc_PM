@@ -33,6 +33,35 @@
 
 #include "menu_general.h"
 
+#define TELEM_2ND_COLUMN (10*FW)
+void displayGpsModel(uint8_t y, char direction, uint16_t bp, uint16_t ap)
+{
+  IF_GPS_IS_FIXED {
+    if (!direction) direction = '-';
+    lcdDrawNumberNAtt(TELEM_2ND_COLUMN, y, bp / 100, LEFT); // ddd before '.'
+    lcdDrawChar(lcdLastPos, y, '@');
+    uint8_t mn = bp % 100; // TODO div_t
+    if (g_eeGeneral.gpsFormat == 0) {
+      lcdDrawChar(lcdLastPos+FWNUM, y, direction);
+      lcdDrawNumberNAtt(lcdLastPos+FW+FW+1, y, mn, LEFT|LEADING0, 2); // mm before '.'
+      lcdDrawSolidVerticalLine(lcdLastPos, y, 2);
+      uint16_t ss = ap * 6;
+      lcdDrawNumberNAtt(lcdLastPos+3, y, ss / 1000, LEFT|LEADING0, 2); // ''
+      lcdDrawPoint(lcdLastPos, y+FH-2, 0); // small decimal point
+      lcdDrawNumberNAtt(lcdLastPos+2, y, ss % 1000, LEFT|LEADING0, 3); // ''
+      lcdDrawSolidVerticalLine(lcdLastPos, y, 2);
+      lcdDrawSolidVerticalLine(lcdLastPos+2, y, 2);
+    } else {
+      lcdDrawNumberNAtt(lcdLastPos+FW, y, mn, LEFT|LEADING0, 2); // mm before '.'
+      lcdDrawPoint(lcdLastPos, y+FH-2, 0); // small decimal point
+      lcdDrawNumberNAtt(lcdLastPos+2, y, ap, LEFT|UNSIGN|LEADING0, 4); // after '.'
+      lcdDrawChar(lcdLastPos+1, y, direction);
+    }  } else {
+    // no fix
+    lcdDrawText(TELEM_2ND_COLUMN, y, STR_VCSWFUNC+1/*----*/);
+  }
+}
+
 void menuStatisticsView(uint8_t event)
 {
   TITLE(STR_MENUSTAT);
@@ -91,6 +120,9 @@ void menuStatisticsDebug(uint8_t event)
     AUDIO_KEYPAD_UP();
     break;
 
+  case EVT_KEY_FIRST(KEY_UP):
+    chainMenu(menutModelTracker);
+    break;
   case EVT_KEY_FIRST(KEY_DOWN):
     chainMenu(menuStatisticsView);
     break;
@@ -129,5 +161,100 @@ void menuStatisticsDebug(uint8_t event)
 //  lcdDrawNumberNAtt(14*FW, 6*FH, freeRam(), UNSIGN);
 
   lcdDrawText(4*FW, 7*FH+1, STR_MENUTORESET);
+  lcd_status_line();
+}
+
+
+
+
+#define TR_SEARCHMODEL           CENTER TR_ENTER" Search Model"
+extern const pm_char STR_SEARCHMODEL[];
+const pm_char STR_SEARCHMODEL[] PROGMEM = TR_SEARCHMODEL;
+
+#define TR_MENUTRACKER           "TRACKER"
+extern const pm_char STR_MENUTRACKER[];
+const pm_char STR_MENUTRACKER[] PROGMEM = TR_MENUTRACKER;
+
+void menutModelTracker(uint8_t event)
+{
+  TITLE(STR_MENUTRACKER);
+
+  switch(event) {
+  case EVT_KEY_FIRST(KEY_ENTER):
+    /*
+    g_tmr1Latency_min = -1;
+    g_tmr1Latency_max = 0;
+    g_guibuild_min = -1;
+    g_guibuild_max = 0;
+    g_lcddraw_min = -1;
+    g_lcddraw_max = 0;
+    maxMixerDuration  = 0;
+    */
+    AUDIO_KEYPAD_UP();
+    break;
+
+  case EVT_KEY_FIRST(KEY_DOWN):
+    chainMenu(menuStatisticsDebug);
+    break;
+  case EVT_KEY_FIRST(KEY_EXIT):
+    chainMenu(menuMainView);
+    break;
+  }
+/*
+#define COLDEBUG1 10*FW
+#define COLDEBUG2 15*FW
+#define COLDEBUG3 19*FW
+#define OFSDEBUG  3*FW
+
+  lcdDrawTextLeft(1*FH, STR_COMPUTE);
+  lcdDrawText(COLDEBUG1, 1*FH, STR_MAX);
+  lcdDrawText(COLDEBUG2, 1*FH, STR_MIN);
+
+  lcdDrawText(FW/2, 2*FH, STR_PROTOCOL);
+  lcdDrawNumberNAtt(COLDEBUG1+OFSDEBUG, 2*FH, (g_tmr1Latency_max/2), UNSIGN);
+  lcdDrawNumberNAtt(COLDEBUG2+OFSDEBUG, 2*FH, (g_tmr1Latency_min/2), UNSIGN);
+
+  lcdDrawText(FW/2, 3*FH, STR_GUIBUILD);
+  lcdDrawNumberNAtt(COLDEBUG1+OFSDEBUG, 3*FH, DURATION_MS_PREC2(g_guibuild_max), PREC2);
+  lcdDrawNumberNAtt(COLDEBUG2+OFSDEBUG, 3*FH, DURATION_MS_PREC2(g_guibuild_min), PREC2);
+
+  lcdDrawText(FW/2, 4*FH, STR_LCDDRAW);
+  lcdDrawNumberNAtt(COLDEBUG1+OFSDEBUG, 4*FH, DURATION_MS_PREC2(g_lcddraw_max), PREC2);
+  lcdDrawNumberNAtt(COLDEBUG2+OFSDEBUG, 4*FH, DURATION_MS_PREC2(g_lcddraw_min), PREC2);
+
+  lcdDrawText(FW/2, 5*FH, STR_MIXERlowcase);
+  lcdDrawNumberNAtt(COLDEBUG2+OFSDEBUG, 5*FH, DURATION_MS_PREC2(maxMixerDuration), PREC2);
+  lcdDrawText(FW/2, 6*FH, STR_FREESRAM);
+  lcdDrawNumberNAtt(COLDEBUG2+OFSDEBUG, 6*FH, stackAvailable(), UNSIGN);
+
+//  lcdDrawTextLeft(6*FH, STR_FREERAMINB);
+//  lcdDrawNumberNAtt(14*FW, 6*FH, freeRam(), UNSIGN);
+*/
+
+
+  uint8_t line=1*FH+1;
+
+  // Latitude
+  lcdDrawTextLeft(line, STR_LATITUDE);
+  displayGpsModel(line, telemetryData.value.gpsLatitudeNS, telemetryData.value.gpsLatitude_bp, telemetryData.value.gpsLatitude_ap);
+  // Longitude
+  line+=1*FH+1;
+  lcdDrawTextLeft(line, STR_LONGITUDE);
+  displayGpsModel(line, telemetryData.value.gpsLongitudeEW, telemetryData.value.gpsLongitude_bp, telemetryData.value.gpsLongitude_ap);
+  //displayGpsTime();
+  line+=1*FH+1;
+  lcdDrawTextAtIndex(0, line, STR_VTELEMCHNS, TELEM_GPSALT, 0);
+  lcdPutsTelemetryChannelValue(TELEM_2ND_COLUMN-2*FW, line, TELEM_GPSALT-1, telemetryData.value.gpsAltitude, 0);
+  lcdDrawTextAtIndex(TELEM_2ND_COLUMN+FW, line, STR_VTELEMCHNS, TELEM_SPEED, 0);
+  lcdPutsTelemetryChannelValue(LCD_W-3*FW, line, TELEM_SPEED-1, telemetryData.value.gpsSpeed_bp, 0);
+  line+=1*FH+1;
+  lcdDrawTextAtIndex(0, line, STR_VTELEMCHNS, TELEM_DIST, 0);
+  lcdPutsTelemetryChannelValue(TELEM_2ND_COLUMN-2*FW, line, TELEM_DIST-1, telemetryData.value.gpsDistance, 0);
+  lcdDrawTextAtIndex(TELEM_2ND_COLUMN+FW, line, STR_VTELEMCHNS, TELEM_HDG, 0);
+  lcdPutsTelemetryChannelValue(LCD_W-3*FW, line, TELEM_HDG-1, telemetryData.value.gpsCourse_bp, 0);
+  line+=1*FH+1;
+
+
+  lcdDrawText(4*FW, 7*FH+1, STR_SEARCHMODEL);
   lcd_status_line();
 }

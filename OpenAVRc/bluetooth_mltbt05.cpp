@@ -31,7 +31,7 @@
 */
 
 /**************************************************************************
-  Bluetooth version for ORIGINAL HM10 (with quartz on top left)
+  Bluetooth version for MLT BT05 (without quartz on top left)
 ***************************************************************************/
 
 #include "OpenAVRc.h"
@@ -93,38 +93,41 @@ AT+BATT -> Collect the battery power this command only can be used for HM-10/11
 How to realize sending commands by using smartphone:
 AT+MODE -> Set up the module working mode through UART
 
-********************************************************************
-  Command             Description
-  ----------------------------------------------------------------
-  AT                  Check if the command terminal work normally
-  AT+RESET            Software reboot
-  AT+VERR             Get firmware, bluetooth, HCI and LMP version
-  AT+HELP             List all the commands
-  AT+NAME             Get/Set local device name
-  AT+PIN or PASS      Get/Set pin code for pairing
-  AT+BAUD             Get/Set baud rate
-  AT+LADDR            Get local bluetooth address
-  AT+ADDR             Get local bluetooth address
-  AT+DEFAULT          Restore factory default
-  AT+RENEW            Restore factory default
-  AT+STATE            Get current state
-  AT+PWRM             Get/Set power on mode(low power)
-  AT+POWE             Get/Set RF transmit power
-  AT+SLEEP            Sleep mode
-  AT+ROLE             Get/Set current role.
-  AT+PARI             Get/Set UART parity bit.
-  AT+STOP             Get/Set UART stop bit.
-  AT+INQ              Search slave model
-  AT+SHOW             Show the searched slave model.
-  AT+CONN             Connect the index slave model.
-  AT+IMME             System wait for command when power on.
-  AT+START            System start working.
-  AT+UUID             Get/Set system SERVER_UUID .
-  AT+CHAR             Get/Set system CHAR_UUID .
-  -----------------------------------------------------------------
-  Note: (M) = The command support master mode only.
-  Copyright@2013 www.bolutek.com. All rights reserved.
-********************************************************************
+see here https://www.instructables.com/How-to-Use-Bluetooth-40-HM10/
+see MLT-BT05-V4.4 doc here https://blog.yavilevich.com/2017/03/mlt-bt05-ble-module-a-clone-of-a-clone/
+AT+HELP -> liste des commandes supportées.
+
+*******************************************************************
+* Command             Description
+*----------------------------------------------------------------
+* AT                  Check if the command terminal work normally
+* AT+DEFAULT          Restore factory default
+[00]* AT+BAUD             Get/Set baud rate
+* AT+RESET            Software reboot
+* AT+ROLE             Get/Set current role.
+* AT+DISC             Disconnect connection
+* AT+ADVEN            Broadcast switch
+* AT+ADVI             Broadcast interval
+* AT+NINTERVAL        Connection interval
+* AT+POWE             Get/Set RF transmit power
+* AT+NAME             Get/Set local device name
+* AT+LADDR            Get local bluetooth address
+* AT+VERSION          Get firmware, bluetooth, HCI and LMP version
+* AT+TYPE             Binding and pairing settings
+* AT+PIN              Get/Set pin code for pairing
+* AT+UUID             Get/Set system SERVER_UUID .
+* AT+CHAR             Get/Set system CHAR_UUID .
+* AT+INQ              Search from device
+* AT+RSLV             Read the scan list MAC address
+* AT+CONN             Connected scan list device
+* AT+CONA             Connection specified MAC
+* AT+BAND             Binding from device
+* AT+CLRBAND          Cancel binding
+* AT+GETDCN           Number of scanned list devices
+* AT+SLEEP            Sleep mode
+* AT+HELP             List all the commands
+* ---------------------------------------------------------------
+******************************************************************
 */
 DECL_FLASH_STR2(Str_AT,          "");        // Simple AT command
 DECL_FLASH_STR2(Str_RESET,       "RESET");   // Reset
@@ -154,7 +157,7 @@ enum {AT_AT = 0, AT_RESET, AT_VERSION, AT_HELP, AT_NAME, AT_PASS, AT_BAUD, AT_LA
       AT_DEFAULT, AT_RENEW, AT_STATE, AT_PWRM, AT_SLEEP, AT_ROLE, AT_PARI,
       AT_STOP, AT_INQ, AT_SHOW, AT_CONN, AT_IMME, AT_START, AT_CMD_MAX_NB};
 
-DECL_FLASH_TBL(AtCmdTbl, char * const) = {Str_AT, Str_RESET, Str_VERR, Str_HELP, Str_NAME, Str_PASS, Str_BAUD, Str_LADDR, Str_ADDR, Str_ROLE,
+DECL_FLASH_TBL(AtCmdTbl, char * const) = {Str_AT, Str_RESET, Str_VERSION, Str_HELP, Str_NAME, Str_PASS, Str_BAUD, Str_LADDR, Str_ADDR, Str_ROLE,
 Str_PARI, Str_STOP,  Str_INQ, Str_SHOW, Str_CONN, Str_IMME, Str_START};
 
 /* ALL THE STATUS SRINGS THE BT MODULE CAN ANSWER */
@@ -439,14 +442,14 @@ int8_t bluetooth_setPswd(char *BtPswd, uint16_t TimeoutMs)
  * \param  TimeoutMs:    Timeout in ms.
  * \return < 0: error, > 1, length of the response present in RespBuf.
  */
-
+/*
 int8_t bluetooth_getRemoteName(uint8_t *RemoteMacBin, char *RespBuf, uint8_t RespBufMaxLen, uint16_t TimeoutMs)
 {
   char MacStr[15];
   // Format: [00]25,56,D8CA0F
-  //return(sendAtCmdAndWaitForResp(AT_RNAME, BT_GET, buildMacStr(RemoteMacBin, MacStr), RespBuf, RespBufMaxLen, 5, 6, Str_CRLF_OK_CRLF, TimeoutMs));
+  return(sendAtCmdAndWaitForResp(AT_RNAME, BT_GET, buildMacStr(RemoteMacBin, MacStr), RespBuf, RespBufMaxLen, 5, 6, Str_CRLF_OK_CRLF, TimeoutMs));
 }
-
+*/
 
 /**
  * \file  bluetooth_hm10.cpp
@@ -937,7 +940,7 @@ static int8_t getBtStateIdx(const char *BtState)
 static int8_t clearPairedList(uint16_t TimeoutMs)
 {
   char RespBuf[20];
-  //return(sendAtCmdAndWaitForResp(AT_RMAAD, BT_CMD, NULL, RespBuf, sizeof(RespBuf), 0, 0, Str_OK_CRLF, TimeoutMs));
+  return(sendAtCmdAndWaitForResp(AT_RMAAD, BT_CMD, NULL, RespBuf, sizeof(RespBuf), 0, 0, Str_OK_CRLF, TimeoutMs));
 }
 
 void BT_Send_Channels()

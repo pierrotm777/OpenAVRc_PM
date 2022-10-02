@@ -36,7 +36,7 @@ FAI = NO
 SDCARD = NO
 
 # Use Bluetooth
-# Values = NO, HC05, HM10
+# Values = NO, HC05, HM10, MLTBT05
 BLUETOOTH = NO
 
 # Use xmodem
@@ -1039,6 +1039,11 @@ else ifeq ($(BLUETOOTH), HM10)
   need_Serial1=YES
   need_uCli = YES
   GUIMODELSRC += gui/menu_general_bluetooth.cpp bluetooth_hm10.cpp
+else ifeq ($(BLUETOOTH), MLTBT05)
+  CPPDEFS += -DBLUETOOTH=$(BLUETOOTH)
+  need_Serial1=YES
+  need_uCli = YES
+  GUIMODELSRC += gui/menu_general_bluetooth.cpp bluetooth_mltbt05.cpp
 endif
 
 
