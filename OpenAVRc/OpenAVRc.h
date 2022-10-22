@@ -1110,8 +1110,8 @@ const pm_char STR_OPENAVRCISLOADING[] PROGMEM = "OpenAVRc is loading ...";
   FORCEINLINE void Xany_scheduleTx_AllInstance();
 #endif
 
-#if (PCM_PROTOCOL==FUTPCM1K)
-#include "protocol/FUTABA_PCM1024.h"
+#if (PCM_PROTOCOL==YES)
+#include "protocol/PROTO_PCM.h"
 #endif
 
 #if (SERIAL_PROTOCOL==MULTIMODULE)

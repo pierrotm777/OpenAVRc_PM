@@ -143,7 +143,7 @@ RTCLOCK = YES
 SERIAL_PROTOCOL = NO
 
 # Pcm protocol
-# Values = NO, FUTPCM1K, GRAPCM1K
+# Values = NO, YES
 PCM_PROTOCOL = NO
 
 # TRANSLATIONS
@@ -259,11 +259,11 @@ A7105PAG = 20
 
 # Enable SX1276 SPI protocols
 # Values = NO, YES
-SX1276 = NO
+#SX1276 = NO
 
 # Set SX1276 PA gain in DB
 # Values = 14,20
-SX1276PAG = 14
+#SX1276PAG = 14
 
 # Enable X-ANY feature
 # Values = NO, 1, 2, 3 ,4
@@ -460,10 +460,10 @@ ifeq ($(PCB), MEGAMINI)
  	  	CPPDEFS += -DA7105PA_GAIN=$(A7105PAG)
   	endif
 
-  	ifeq ($(SX1276), YES)
-   		CPPDEFS += -DPROTO_HAS_SX1276
- 	  	CPPDEFS += -DASX1276PA_GAIN=$(SX1276PAG)
-  	endif
+ # 	ifeq ($(SX1276), YES)
+ #  		CPPDEFS += -DPROTO_HAS_SX1276
+ #	  	CPPDEFS += -DASX1276PA_GAIN=$(SX1276PAG)
+ # 	endif
   endif
 
 	ifneq ($(X_ANY), NO)
@@ -766,10 +766,6 @@ ifeq ($(PCB), MEGA2560)
  	  	CPPDEFS += -DA7105PA_GAIN=$(A7105PAG)
   	endif
 
-  	ifeq ($(SX1276), YES)
-   		CPPDEFS += -DPROTO_HAS_SX1276
- 	  	CPPDEFS += -DASX1276PA_GAIN=$(SX1276PAG)
-  	endif
   endif
 
 
@@ -1034,16 +1030,11 @@ ifeq ($(BLUETOOTH), HC05)
   need_Serial1=YES
   need_uCli = YES
   GUIMODELSRC += gui/menu_general_bluetooth.cpp bluetooth.cpp
-else ifeq ($(BLUETOOTH), HM10)
-  CPPDEFS += -DBLUETOOTH=$(BLUETOOTH)
-  need_Serial1=YES
-  need_uCli = YES
-  GUIMODELSRC += gui/menu_general_bluetooth.cpp bluetooth_hm10.cpp
-else ifeq ($(BLUETOOTH), MLTBT05)
-  CPPDEFS += -DBLUETOOTH=$(BLUETOOTH)
-  need_Serial1=YES
-  need_uCli = YES
-  GUIMODELSRC += gui/menu_general_bluetooth.cpp bluetooth_mltbt05.cpp
+#else ifeq ($(BLUETOOTH), HM10)
+#  CPPDEFS += -DBLUETOOTH=$(BLUETOOTH)
+#  need_Serial1=YES
+#  need_uCli = YES
+#  GUIMODELSRC += gui/menu_general_bluetooth.cpp bluetooth_hm10.cpp
 endif
 
 
@@ -1063,18 +1054,6 @@ else ifeq ($(LCD), SH1106)
 else ifeq ($(LCD), NT7538SPI)
   CPPDEFS += -DLCD_NT7538SPI
 endif
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ifeq ($(XMODEM), YES)
@@ -1113,8 +1092,7 @@ ifneq ($(SERIAL_PROTOCOL), NO)
   CPPDEFS += -DSERIAL_PROTOCOL=$(SERIAL_PROTOCOL)
 endif
 
-CPPDEFS += -DFUTPCM1K=1
-CPPDEFS += -DGRAPCM1K=2
+CPPDEFS += -DYES=1
 ifneq ($(PCM_PROTOCOL), NO)
   CPPDEFS += -DPCM_PROTOCOL=$(PCM_PROTOCOL)
 endif
