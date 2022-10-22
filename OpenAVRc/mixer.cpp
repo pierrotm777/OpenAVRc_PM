@@ -793,7 +793,7 @@ void evalMixes(uint8_t tick10ms)
     int16_t value = applyLimits(i, q);  // applyLimits will remove the 256 100% basis
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
       {
-#if (PCM_PROTOCOL==FUTPCM1K)
+#if (PCM_PROTOCOL==YES)
 #warning TO DO: add a test here to check if Current Proto is PCM1024
 				if(i < FUT_PCM1024_PROP_CH_NB)
 				{

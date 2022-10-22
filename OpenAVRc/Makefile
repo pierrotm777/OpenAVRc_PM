@@ -259,11 +259,11 @@ A7105PAG = 20
 
 # Enable SX1276 SPI protocols
 # Values = NO, YES
-#SX1276 = NO
+SX1276 = NO
 
 # Set SX1276 PA gain in DB
 # Values = 14,20
-#SX1276PAG = 14
+SX1276PAG = 14
 
 # Enable X-ANY feature
 # Values = NO, 1, 2, 3 ,4
@@ -460,10 +460,10 @@ ifeq ($(PCB), MEGAMINI)
  	  	CPPDEFS += -DA7105PA_GAIN=$(A7105PAG)
   	endif
 
- # 	ifeq ($(SX1276), YES)
- #  		CPPDEFS += -DPROTO_HAS_SX1276
- #	  	CPPDEFS += -DASX1276PA_GAIN=$(SX1276PAG)
- # 	endif
+  	ifeq ($(SX1276), YES)
+   		CPPDEFS += -DPROTO_HAS_SX1276
+ 	  	CPPDEFS += -DASX1276PA_GAIN=$(SX1276PAG)
+  	endif
   endif
 
 	ifneq ($(X_ANY), NO)
@@ -766,6 +766,10 @@ ifeq ($(PCB), MEGA2560)
  	  	CPPDEFS += -DA7105PA_GAIN=$(A7105PAG)
   	endif
 
+  	ifeq ($(SX1276), YES)
+   		CPPDEFS += -DPROTO_HAS_SX1276
+ 	  	CPPDEFS += -DASX1276PA_GAIN=$(SX1276PAG)
+  	endif
   endif
 
 
@@ -1030,31 +1034,17 @@ ifeq ($(BLUETOOTH), HC05)
   need_Serial1=YES
   need_uCli = YES
   GUIMODELSRC += gui/menu_general_bluetooth.cpp bluetooth.cpp
-#else ifeq ($(BLUETOOTH), HM10)
-#  CPPDEFS += -DBLUETOOTH=$(BLUETOOTH)
-#  need_Serial1=YES
-#  need_uCli = YES
-#  GUIMODELSRC += gui/menu_general_bluetooth.cpp bluetooth_hm10.cpp
+else ifeq ($(BLUETOOTH), HM10)
+  CPPDEFS += -DBLUETOOTH=$(BLUETOOTH)
+  need_Serial1=YES
+  need_uCli = YES
+  GUIMODELSRC += gui/menu_general_bluetooth.cpp bluetooth_hm10.cpp
+else ifeq ($(BLUETOOTH), MLTBT05)
+  CPPDEFS += -DBLUETOOTH=$(BLUETOOTH)
+  need_Serial1=YES
+  need_uCli = YES
+  GUIMODELSRC += gui/menu_general_bluetooth.cpp bluetooth_mltbt05.cpp
 endif
-
-
-
-ifeq ($(LCD), ST7565R)
-  CPPDEFS += -DLCD_ST7565R
-else ifeq ($(LCD), ERC12864FSF)
-  CPPDEFS += -DLCD_ERC12864FSF
-else ifeq ($(LCD), ST7920)
-  CPPDEFS += -DLCD_ST7920
-else ifeq ($(LCD), KS108)
-  CPPDEFS += -DLCD_KS108
-else ifeq ($(LCD), SSD1306)
-  CPPDEFS += -DLCD_SSD1306
-else ifeq ($(LCD), SH1106)
-  CPPDEFS += -DLCD_SH1106
-else ifeq ($(LCD), NT7538SPI)
-  CPPDEFS += -DLCD_NT7538SPI
-endif
-
 
 ifeq ($(XMODEM), YES)
   CPPDEFS += -DXMODEM
