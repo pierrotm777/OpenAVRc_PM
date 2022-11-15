@@ -44,11 +44,7 @@
 #define MLINK_BIND rfState8_p2M
 #define MLINK_NUM_WAIT_LOOPS (200 / 5)   //each loop is ~5us.  Do not wait more than 200us TODO measure
 
-
-uint8_t  MLINK_packet_count;
 uint8_t  crc8;
-uint8_t  crc8_polynomial;
-uint8_t  RX_numMlink;
 
 //Channel MIN MAX values
 #define CHANNEL_MAX_100	1844	//	+100%
@@ -70,7 +66,7 @@ static void crc8_update(uint8_t byte)
 	crc8 = crc8 ^ byte;
 	for ( uint8_t j = 0; j < 8; j++ )
 		if ( crc8 & 0x80 )
-			crc8 = (crc8<<1) ^ crc8_polynomial;
+			crc8 = (crc8<<1) ^ 0x31/*crc8_polynomial*/;//crc8_polynomial  = 0x31;		// Default CRC crc8_polynomial
 		else
 			crc8 <<= 1;
 }
@@ -154,7 +150,7 @@ static void MLINK_cyrf_config()
 
 static void MLINK_send_bind_packet()
 {
-	uint8_t p_c=MLINK_packet_count>>1;
+	uint8_t p_c=packet_count_p2M>>1;
 
 	memset(packet_p2M, p_c<0x16?0x00:0xFF, MLINK_PACKET_SIZE-1);
 	packet_p2M[0]=0x0F;	// bind
@@ -393,7 +389,7 @@ static void MLINK_send_data_packet()
 		if(telemetry_lost)
 		{
 			telemetry_lost = 0;
-			MLINK_packet_count = 50;
+			packet_count_p2M = 50;
 			telemetry_counter = 100;
 		}
 	}
@@ -411,7 +407,7 @@ static void MLINK_send_data_packet()
 		if(telemetry_lost)
 		{
 			telemetry_lost = 0;
-			MLINK_packet_count = 50;
+			packet_count_p2M = 50;
 			telemetry_counter = 100;
 		}
 	}
@@ -446,43 +442,43 @@ uint16_t MLINK_callback()
 					{// CRC is ok
 						//debugln("CRC ok");
 						if(packet_p2M[0]==0x7F)
-							MLINK_packet_count=3;					// Start sending bind payload
-						else if(MLINK_packet_count > 0x19*2)
+							packet_count_p2M=3;					// Start sending bind payload
+						else if(packet_count_p2M > 0x19*2)
 						{
 							if(packet_p2M[0] == 0x8F)
-								MLINK_packet_count++;
+								packet_count_p2M++;
 							else if(packet_p2M[0] == 0x9F)
-								MLINK_packet_count=0x80;			// End bind
+								packet_count_p2M=0x80;			// End bind
 							else
-								MLINK_packet_count=0;				// Restart bind...
+								packet_count_p2M=0;				// Restart bind...
 						}
 					}
 				}
 			}
 			else
-				MLINK_packet_count=0;
+				packet_count_p2M=0;
 			CYRF_WriteRegister(CYRF_29_RX_ABORT, 0x20);		// Enable RX abort
 			CYRF_WriteRegister(CYRF_0F_XACT_CFG, 0x24);		// Force end state
 			CYRF_WriteRegister(CYRF_29_RX_ABORT, 0x00);		// Disable RX abort
 			send_seq_p2M=MLINK_BIND_TX;							// Retry sending bind packet
 			CYRF_SetTxRxMode(TX_EN);						// Transmit mode
-			if(MLINK_packet_count)
+			if(packet_count_p2M)
 				return 18136*2;
 		case MLINK_BIND_TX:
-			if(--bind_counter_p2M==0 || MLINK_packet_count>=0x1B*2)
+			if(--bind_counter_p2M==0 || packet_count_p2M>=0x1B*2)
 			{ // Switch to normal mode
 				MLINK_BIND = 0;//BIND_DONE;
 				send_seq_p2M=MLINK_PREP_DATA;
 				return 22720*2;
 			}
 			MLINK_send_bind_packet();
-			if(MLINK_packet_count == 0 || MLINK_packet_count > 0x19*2)
+			if(packet_count_p2M == 0 || packet_count_p2M > 0x19*2)
 			{
 				send_seq_p2M++;		// MLINK_BIND_PREP_RX
 				return 4700*2;	// Original is 4900
 			}
-			MLINK_packet_count++;
-			if(MLINK_packet_count&1)
+			packet_count_p2M++;
+			if(packet_count_p2M&1)
 				return 6000*2;
 			return 22720*2;
 		case MLINK_BIND_PREP_RX:
@@ -497,7 +493,7 @@ uint16_t MLINK_callback()
 			CYRF_SetTxRxMode(RX_EN);							// Receive mode
 			CYRF_WriteRegister(CYRF_05_RX_CTRL, 0x82);			// Prepare to receive
 			send_seq_p2M++;	//MLINK_BIND_RX
-			if(MLINK_packet_count > 0x19*2)
+			if(packet_count_p2M > 0x19*2)
 				return 28712*2;									// Give more time to the RX to confirm that the bind is ok...
 			return (28712-4700)*2;
 
@@ -509,7 +505,7 @@ uint16_t MLINK_callback()
 			CYRF_ConfigRFChannel(channel_used_p2M[channel_index_p2M]);
 			CYRF_SetPower(0x38);
 			#if defined(MLINK_HUB_TELEMETRY) || defined(MLINK_FW_TELEMETRY)
-				MLINK_packet_count = 0;
+				packet_count_p2M = 0;
 				telemetry_lost = 1;
 			#endif
 			send_seq_p2M++;
@@ -551,10 +547,10 @@ uint16_t MLINK_callback()
 		case MLINK_RX:
 			#if defined(MLINK_HUB_TELEMETRY) || defined(MLINK_FW_TELEMETRY)
 				//TX LQI calculation
-				MLINK_packet_count++;
-				if(MLINK_packet_count>=50)
+				packet_count_p2M++;
+				if(packet_count_p2M>=50)
 				{
-					MLINK_packet_count=0;
+					packet_count_p2M=0;
 					TX_LQI=telemetry_counter;
 					if(telemetry_counter==0)
 						telemetry_lost = 1;
@@ -644,7 +640,7 @@ void MLINK_init()
 	MLINK_Unk_6_2  = 0x3A;		//unknown value sent during bind but doesn't seem to matter
 
 	#ifdef MLINK_FORCE_ID
-		if(RX_numMlink)
+		if(RXNUM)
 		{
 			//Cockpit SX
 			memcpy(MLINK_Data_Code,"\x4C\x97\x9D\xBF\xB8\x3D\xB5\xBE",8);
@@ -682,7 +678,7 @@ void MLINK_init()
 
 	if(MLINK_BIND)//if(IS_BIND_IN_PROGRESS)
 	{
-		MLINK_packet_count = 0;
+		packet_count_p2M = 0;
 		bind_counter_p2M = MLINK_BIND_COUNT;
 		CYRF_ConfigDataCode((uint8_t*)"\x6F\xBE\x32\x01\xDB\xF1\x2B\x01\xE3\x5C\xFA\x02\x97\x93\xF9\x02",16); //Bind data code
 		CYRF_ConfigRFChannel(MLINK_BIND_CHANNEL);

@@ -78,6 +78,7 @@
 #include "SKYARTEC_cc2500.c"
 #include "CORONA_cc2500.c"
 #include "HITEC_cc2500.c"
+#include "FRSKY_RX_cc2500.c"
 //#include "HOTT_cc2500.c"
 //#include "FUTABA_cc2500.c"
 #endif
@@ -88,6 +89,7 @@
 #include "DEVO_cyrf6936.c"
 #include "DSM_cyrf6936.c"
 #include "J6PRO_cyrf6936.c"
+#include "MLINK_cyrf6936.c"
 //#include "E129_cyrf6936.c"
 //#include "iface_rf2500.h"
 //#include "RF2500_EMU.c"

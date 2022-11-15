@@ -49,8 +49,8 @@
 #define EU_FREQ		19
 
 // Telemetry
-#define TELEMETRY_BUFFER_SIZE 32
-uint8_t packet_in[TELEMETRY_BUFFER_SIZE];//telemetry receiving packets
+//#define TELEMETRY_BUFFER_SIZE 32
+//uint8_t telem_save_data_p2M[TELEMETRY_BUFFER_SIZE];//telemetry receiving packets
 uint8_t v_lipo1;
 uint8_t v_lipo2;
 uint8_t RX_RSSI;
@@ -504,24 +504,24 @@ static uint16_t FrSkyR9_callback()
 			{
 				if(SX1276_ReadReg(SX1276_13_REGRXNBBYTES)==13)
 				{
-					SX1276_ReadRegisterMulti(SX1276_00_FIFO,packet_in,13);
+					SX1276_ReadRegisterMulti(SX1276_00_FIFO,telem_save_data_p2M,13);
 #if defined(FRSKY)
           if (XTELEMETRY) // telemetry on?
             {
-              frskyX_check_telemetry(packet_in, 13);
+              frskyX_check_telemetry(telem_save_data_p2M, 13);
             }
 #endif
 /*
-					if( packet_in[9]==temp_rfid_addr_p2M[1] && packet_in[10]==temp_rfid_addr_p2M[2] && FrSkyX_crc(packet_in, 11, temp_rfid_addr_p2M[1]+(temp_rfid_addr_p2M[2]<<8))==(packet_in[11]+(packet_in[12]<<8)) )
+					if( telem_save_data_p2M[9]==temp_rfid_addr_p2M[1] && telem_save_data_p2M[10]==temp_rfid_addr_p2M[2] && FrSkyX_crc(telem_save_data_p2M, 11, temp_rfid_addr_p2M[1]+(temp_rfid_addr_p2M[2]<<8))==(telem_save_data_p2M[11]+(telem_save_data_p2M[12]<<8)) )
 					{
-						if(packet_in[0]&0x80)
-							RX_RSSI=packet_in[0]<<1;
+						if(telem_save_data_p2M[0]&0x80)
+							RX_RSSI=telem_save_data_p2M[0]<<1;
 						else
-							v_lipo1=(packet_in[0]<<1)+1;
+							v_lipo1=(telem_save_data_p2M[0]<<1)+1;
 						//TX_LQI=~(SX1276_ReadReg(SX1276_19_PACKETSNR)>>2)+1;
 						TX_RSSI=SX1276_ReadReg(SX1276_1A_PACKETRSSI)-157;
 						for(uint8_t i=0;i<9;i++)
-							packet_p2M[4+i]=packet_in[i];			// Adjust buffer to match FrSkyX
+							packet_p2M[4+i]=telem_save_data_p2M[i];			// Adjust buffer to match FrSkyX
 						//frsky_process_telemetry(packet,len);	// Process telemetry packet
 						pps_counter++;
 						if(TX_LQI==0)

@@ -793,20 +793,8 @@ void evalMixes(uint8_t tick10ms)
     int16_t value = applyLimits(i, q);  // applyLimits will remove the 256 100% basis
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
       {
-#if (PCM_PROTOCOL==YES)
-#warning TO DO: add a test here to check if Current Proto is PCM1024
-				if(i < FUT_PCM1024_PROP_CH_NB)
-				{
-					if(!(Futaba.Pcm1024.XanyChMap & (1 << i)))
-					{
-						// OK: Channel is not used with Xany with PCM1024 protocol
-						channelOutputs[i] = value;  // copy consistent word to int-level
-					}
-				}
-				else
-				{
-					channelOutputs[i] = value;  // copy consistent word to int-level
-				}
+#if (PCM_PROTOCOL == YES)
+        if(!(Proto.Pcm.XanyChMap & (1 << i))) channelOutputs[i] = value;  // copy consistent word to int-level
 #else
         channelOutputs[i] = value;  // copy consistent word to int-level
 #endif

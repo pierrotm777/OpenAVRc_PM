@@ -51,7 +51,7 @@ const static RfOptionSettingsvar_t RfOpt_SFHSS_Ser[] PROGMEM =
 #define CHAN_MULTIPLIER  100
 #define CHAN_MAX_VALUE (100 * CHAN_MULTIPLIER)
 #define SFHSS_autobind g_model.rfOptionBool2
-#define SFHSS_RF_CH_NUM channel_offset_p2M
+#define channel_index_p2M channel_offset_p2M
 
 #define SFHSS_COARSE	0
 
@@ -63,11 +63,11 @@ static uint8_t fhss_code=0; // 0-27
 static uint16_t counter;
 
 enum {
-    SFHSS_START = 0x101,
-    SFHSS_CAL   = 0x102,
-    SFHSS_TUNE  = 0x103,
+    SFHSS_START = 0x00,
+    SFHSS_CAL   = 0x01,
     SFHSS_DATA1 = 0x02,
-    SFHSS_DATA2 = 0x0b
+    SFHSS_DATA2 = 0x03,
+    SFHSS_TUNE  = 0x04
 };
 
 #define SFHSS_FREQ0_VAL 0xC4
@@ -103,31 +103,40 @@ enum {
 // FREND0   10 - PA_POWER = 0
 
 
-static const uint8_t init_values[] = {
+const PROGMEM uint8_t SFHSS_init_values[] = {
   /* 00 */ 0x2F, 0x2E, 0x2F, 0x07, 0xD3, 0x91, 0x0D, 0x04,
-  /* 08 */ 0x0C, 0x29, 0x10, 0x06, 0x00, 0x5C, 0x4E, SFHSS_FREQ0_VAL,
+  /* 08 */ 0x0C, 0x29, 0x10, 0x06, 0x00, 0x5C, 0x4E, SFHSS_FREQ0_VAL + SFHSS_COARSE,
   /* 10 */ 0x7C, 0x43, 0x83, 0x23, 0x3B, 0x44, 0x07, 0x0C,
   /* 18 */ 0x08, 0x1D, 0x1C, 0x43, 0x40, 0x91, 0x57, 0x6B,
   /* 20 */ 0xF8, 0xB6, 0x10, 0xEA, 0x0A, 0x11, 0x11
 };
 
-// Fast calibration table, see page 55 of swrs040c.pdf
-// 31.2 Frequency Hopping and Multi-Channel Systems
-static uint8_t rf_cal[30][3];
+static void SFHSS_rf_init()
+{
+	CC2500_Strobe(CC2500_SIDLE);
+
+	for (uint8_t i = 0; i < 39; ++i)
+		CC2500_WriteReg(i, pgm_read_byte_near(&SFHSS_init_values[i]));
+
+	CC2500_WriteReg(CC2500_0C_FSCTRL0, g_model.rfOptionValue1);
+
+	CC2500_SetTxRxMode(TX_EN);
+	CC2500_ManagePower();//CC2500_SetPower();
+}
 
 static void SFHSS_tune_chan()
 {
     CC2500_Strobe(CC2500_SIDLE);
-    CC2500_WriteReg(CC2500_0A_CHANNR, SFHSS_RF_CH_NUM*6+16);
+    CC2500_WriteReg(CC2500_0A_CHANNR, channel_index_p2M*6+16);
     CC2500_Strobe(CC2500_SCAL);
 }
 
 static void SFHSS_tune_chan_fast()
 {
     CC2500_Strobe(CC2500_SIDLE);
-    CC2500_WriteReg(CC2500_0A_CHANNR, SFHSS_RF_CH_NUM*6+16);
-    CC2500_WriteRegisterMulti(CC2500_23_FSCAL3, rf_cal[channel_index_p2M], 3);
-    _delay_us(6);
+    CC2500_WriteReg(CC2500_0A_CHANNR, channel_index_p2M*6+16);
+    CC2500_WriteReg(CC2500_25_FSCAL1, calData[channel_index_p2M]);
+    //_delay_us(6);
 }
 
 static void SFHSS_tune_freq()
@@ -141,27 +150,13 @@ static void SFHSS_tune_freq()
 	}
 }
 
-static void SFHSS_init()
-{
-    CC2500_Reset();
-    CC2500_Strobe(CC2500_SIDLE);
-
-//    for (size_t i = 0, reg = CC2500_00_IOCFG2; i < sizeof(init_values); ++i, ++reg) {
-//        CC2500_WriteReg(reg, init_values[i]);
-//    }
-    CC2500_WriteRegisterMulti(CC2500_00_IOCFG2, init_values, sizeof(init_values));
-
- CC2500_SetTxRxMode(TX_EN);
- CC2500_ManagePower();//CC2500_SetPower(TXPOWER_1);
-}
-
 static void SFHSS_calc_next_chan()
 {
-    SFHSS_RF_CH_NUM += fhss_code + 2;
-    if (SFHSS_RF_CH_NUM > 29) {
-        if (SFHSS_RF_CH_NUM < 31)
-            SFHSS_RF_CH_NUM += fhss_code + 2;
-        SFHSS_RF_CH_NUM -= 31;
+    channel_index_p2M += fhss_code + 2;
+    if (channel_index_p2M > 29) {
+        if (channel_index_p2M < 31)
+            channel_index_p2M += fhss_code + 2;
+        channel_index_p2M -= 31;
     }
 }
 
@@ -239,7 +234,7 @@ static void SFHSS_send_packet()//build_data_packet()
     packet_p2M[2]  = temp_rfid_addr_p2M[1];
     packet_p2M[3]  = 0;// unknown but prevents some receivers to bind if not 0
     packet_p2M[4]  = 0;// unknown but prevents some receivers to bind if not 0
-    packet_p2M[5]  = (SFHSS_RF_CH_NUM << 3) | ((channel[0] >> 9) & 0x07);
+    packet_p2M[5]  = (channel_index_p2M << 3) | ((channel[0] >> 9) & 0x07);
     packet_p2M[6]  = (channel[0] >> 1);
     packet_p2M[7]  = (channel[0] << 7) | ((channel[1] >> 5) & 0x7F);
     packet_p2M[8]  = (channel[1] << 3) | ((channel[2] >> 9) & 0x07);
@@ -248,7 +243,6 @@ static void SFHSS_send_packet()//build_data_packet()
     packet_p2M[11] = (channel[3] << 3) | ((fhss_code >> 2) & 0x07);
     packet_p2M[12] = (fhss_code << 6) | command;
 
-	SFHSS_tune_chan_fast();
     CC2500_WriteData(packet_p2M, sizeof(packet_p2M));
 }
 
@@ -259,13 +253,13 @@ static uint16_t SFHSS_callback()
     switch(rfState16_p2M)
     {
     case SFHSS_START:
-        SFHSS_RF_CH_NUM = 0;
+        channel_index_p2M = 0;
         SFHSS_tune_chan();
         rfState16_p2M = SFHSS_CAL;
         return 2000*2;
     case SFHSS_CAL:
-        SCHEDULE_MIXER_END_IN_US(2000*2); // Schedule next Mixer calculations.
-        CC2500_ReadRegisterMulti(CC2500_23_FSCAL3, rf_cal[channel_index_p2M], 3);
+        //SCHEDULE_MIXER_END_IN_US(2000*2); // Schedule next Mixer calculations.
+        calData[channel_index_p2M]=CC2500_ReadReg(CC2500_25_FSCAL1);
         if (++channel_index_p2M < 30) {
             SFHSS_tune_chan();
         } else {
@@ -294,7 +288,7 @@ static uint16_t SFHSS_callback()
       CC2500_ManagePower();//CC2500_SetPower(TXPOWER_1);
       heartbeat |= HEART_TIMER_PULSES;
       CALCULATE_LAT_JIT(); // Calculate latency and jitter.
-      return 3150*2;
+      return 2000*2;
 
     }
 
@@ -303,7 +297,7 @@ static uint16_t SFHSS_callback()
 
 
 // Generate internal id
-static void __attribute__((unused)) SFHSS_get_tx_id()
+static void SFHSS_get_tx_id()
 {
 	// Some receivers (Orange) behaves better if they tuned to id that has
 	//  no more than 6 consecutive zeros and ones
@@ -341,7 +335,7 @@ static uint16_t SFHSS_cb()
  return time;
 }
 
-static void SFHSS_initialize(uint8_t bind)
+static void SFHSS_initialize()
 {
   //BIND_DONE;	// Not a TX bind protocol
   SFHSS_get_tx_id();
@@ -349,20 +343,20 @@ static void SFHSS_initialize(uint8_t bind)
   //Normal hopping
   uint32_t rnd;
   memcpy(&rnd, temp_rfid_addr_p2M, 4); // load id
-
   fhss_code = rnd % 28; // Initialize it to random 0-27 inclusive
 
   //loadrfidaddr_rxnum(3);
-  CC2500_Reset();
-  SFHSS_init();
+  //CC2500_Reset();
+  SFHSS_rf_init();
   rfState16_p2M = SFHSS_START;
+  /*
   if (bind || SFHSS_autobind)
   {
     if (SFHSS_autobind)
     {
       PROTOCOL_SetBindState(1000);
     }
-  }
+  }*/
   PROTO_Start_Callback(SFHSS_cb);
 }
 
@@ -371,10 +365,10 @@ const void *SFHSS_Cmds(enum ProtoCmds cmd)
   switch(cmd)
     {
     case PROTOCMD_INIT:
-      SFHSS_initialize(0);
+      SFHSS_initialize();
       return 0;
     case PROTOCMD_BIND:
-      SFHSS_initialize(1);
+      SFHSS_initialize();
       return 0;
     case PROTOCMD_RESET:
       PROTO_Stop_Callback();

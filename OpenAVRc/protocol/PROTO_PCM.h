@@ -30,33 +30,41 @@
 **************************************************************************
 */
 
-#ifndef PROTO_PCM_H
-#define PROTO_PCM_H
+#ifndef PCM_H
+#define PCM_H
+
+#include "../thirdparty/pt/pt.h" // Include Protothread header
+
+enum {PCM_PROTO_FUT = 0, PCM_PROTO_GRA, PCM_PROTO_MPX, PCM_PROTO_NB};
 
 #define FUT_PCM1024_PROP_CH_NB       8
 
+#define FUT_PCM1024_FRAME_PERIOD_US  28500U
+#define GRA_PCM1024_FRAME_PERIOD_US  44000U
+#define MPX_PCM256_FRAME_PERIOD_US   57000U
 
-#define  FUT_PCM1024_FRAME_PERIOD_US 28500U
+#define PcmProto g_model.rfSubType // g_model.rfSubType is used to distinguish the kind of PCM Proto
 
-#define PcmProto g_model.rfSubType
+typedef PT_THREAD((*BuildRadioPcmBitStreamPtr)(struct pt *)); // Pointer on Protothread function
+
 uint16_t CheckPCMPeriod()
 {
-  if (PcmProto == 0)//Futaba PCM1024
+  if (PcmProto == PCM_PROTO_FUT)//Futaba PCM1024 
   {
-    return 28500U;
+    return FUT_PCM1024_FRAME_PERIOD_US;
   }
-  else if (PcmProto == 1)//Graupner S-PCM
+  else if (PcmProto == PCM_PROTO_GRA)//Graupner S-PCM
   {
-    return 44000U;
+    return GRA_PCM1024_FRAME_PERIOD_US;
   }
-  else if (PcmProto == 2)//Multiplex M-PCM
+  else if (PcmProto == PCM_PROTO_MPX)//Multiplex PCM
   {
-    return 11100U;
+    return MPX_PCM256_FRAME_PERIOD_US;
   }
+	return FUT_PCM1024_FRAME_PERIOD_US;
 }
 
-
-enum {FUT_PCM1024_BUILD_DO_NOTHING = 0, FUT_PCM1024_BUILD_2_FIRST_PACKETS, FUT_PCM1024_BUILD_2_LAST_PACKETS};
+enum {FUT_PCM1024_BUILD_2_FIRST_PACKETS = 0, FUT_PCM1024_BUILD_2_LAST_PACKETS};
 
 union PcmStreamBitNbCouple_Union
 {
@@ -68,34 +76,76 @@ union PcmStreamBitNbCouple_Union
   };
 };
 
-#define PCM_STREAM_BYTE_NB   30 // Can store up to (2 x PCM_STREAM_BYTE_NB) bit durations
+#define PCM_STREAM_BYTE_NB   44 //30 // Can store up to (2 x PCM_STREAM_BYTE_NB) bit durations (MPX needs 88 bit durations, so 44 bytes)
 #define PCM_NBL_MAX_IDX      ((2 * PCM_STREAM_BYTE_NB) - 1)
 
+union Fut24BitPcmPacket_Union
+{
+  uint32_t  Value;
+  struct {
+  uint32_t
+            Ecc:          8,  // ^
+            Position:     10, // |
+            Delta:        4,  // |  24
+            AuxBit0:      1,  // | bits
+            AuxBit1:      1,  // v
+            Reserved:     8;
+  };
+  struct {
+  uint32_t
+            SixBitBlock3: 6,  // ^
+            SixBitBlock2: 6,  // |  24
+            SixBitBlock1: 6,  // | bits
+            SixBitBlock0: 6,  // v
+            Reserved2:    8;
+  };
+}__attribute__((__packed__));
+
+union Fut40BitRadioPcmPacket_Union
+{
+  uint64_t Value;
+  struct{
+  uint64_t
+           TenBitBlock3: 10,
+           TenBitBlock2: 10,
+           TenBitBlock1: 10,
+           TenBitBlock0: 10,
+           Reserved:     24;
+  };
+}__attribute__((__packed__));
+
+#define FUT_PCM_PACKETS_PER_FRAME  4 // See hereafter
+
 typedef struct{
+  uint8_t                      PacketIdx;
+  uint8_t                      BitIdx;
+  uint8_t                      BitCnt;
+  Fut24BitPcmPacket_Union      Fut24BitPcmPacket;
+  Fut40BitRadioPcmPacket_Union Fut40BitRadioPcmPacket[FUT_PCM_PACKETS_PER_FRAME / 2];
+}FutPtCtx_t; // ProtoThread context (since context cannot be saved locally in the ProtoThread)
+
+typedef struct{
+	BuildRadioPcmBitStreamPtr  BuildRadioPcmBitStream;
+  const uint16_t            *ConsecBitDurationHalfUs; // Will point to ConsecBitDurationHalfUs[] of the PCM Manufacturer
   uint8_t
-					BuildState:   3, // 0: Nothing to do, 1: Channels 0 & 1 or 4 & 5 , 2: Channels 2 & 3 or 6 & 7
-					PacketIdx:    3,
-					IsrBufIdx:    1,
-					BitVal:       1;
-  uint8_t BuildNblIdx;
-  uint8_t BuildEndNblIdx[2]; // For the ISR to know PCM frame is fully sent
-  uint8_t TxNblIdx;
-	uint8_t XanyChMap; // One bit per Channel (8 channels max from bit0 to bit7)
-  int16_t MemoChOutputs[FUT_PCM1024_PROP_CH_NB]; // Used to compute Deltas
+					                   BuildState:   3, // 0: Nothing to do, 1: Channels 0 & 1 or 4 & 5 , 2: Channels 2 & 3 or 6 & 7
+					                   PacketIdx:    3,
+					                   IsrBufIdx:    1,
+					                   BitVal:       1;
+  uint8_t                    BuildNblIdx;
+  uint8_t                    BuildEndNblIdx[2]; // For the ISR to know PCM frame is fully sent
+  uint8_t                    TxNblIdx;
+	uint8_t                    XanyChMap; // One bit per Channel (8 channels max from bit0 to bit7)
+  int16_t                    MemoChOutputs[FUT_PCM1024_PROP_CH_NB]; // Used to compute Deltas
   PcmStreamBitNbCouple_Union StreamConsecBitTbl[2][PCM_STREAM_BYTE_NB]; // Double buffering (One buffer is filled during the other is transmitting)
-}FutPcm1024St_t;
+  FutPtCtx_t   PtCtx; // Specific to Futaba
+}PcmSt_t;
 
-#if 0
-typedef struct{
-  FutPcm1024St_t Pcm1024;
-}FutabaSt_t;
-#endif
-
-#define Futaba    pulses2MHz // Just for readability (Futaba PCM1024 structure is an union of pulses2MHz buffer)
+#define Proto    pulses2MHz // Just for readability (Proto structure is an union of pulses2MHz buffer)
 
 /* PUBLIC FUNCTION PROTOTYPES */
-void FutabaPcm1024_buildHalfRadioPcmBitStream(void); // SHALL be called as often as possible in the main loop
+#if defined(X_ANY)
+void Pcm_updateXanyChMap(void);
+#endif
 
-void FutabaPcm1024_updateXanyChannels(void);
-
-#endif // PROTO_PCM_H
+#endif // PCM_H

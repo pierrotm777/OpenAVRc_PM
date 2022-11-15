@@ -43,22 +43,20 @@ uint16_t pps_counter;
 uint8_t  HOTT_packet_count;
 uint16_t Hott_counter;
 uint8_t  rf_ch_num;
-uint8_t  hopping_frequency[78];
 
 const static RfOptionSettingsvar_t RfOpt_HOTT_Ser[] PROGMEM =
 {
-  /*rfProtoNeed*/PROTO_NEED_SPI | BOOL1USED | BOOL2USED,  //can be PROTO_NEED_SPI | BOOL1USED | BOOL2USED | BOOL3USED
+  /*rfProtoNeed*/PROTO_NEED_SPI,  //can be PROTO_NEED_SPI | BOOL1USED | BOOL2USED | BOOL3USED
  /*rfSubTypeMax*/0,
  /*rfOptionValue1Min*/-128, // FREQFINE MIN
  /*rfOptionValue1Max*/127,  // FREQFINE MAX
  /*rfOptionValue2Min*/0,
  /*rfOptionValue2Max*/0,
  /*rfOptionValue3Max*/7,    // RF POWER
-};
+ };
 
 const pm_char STR_SYNCHRO_MODE[] PROGMEM = INDENT "Synch Mode";
 #define SYNCHRO_MODE (g_model.rfOptionBool2)
-
 //#define HOTT_FORCE_ID		// Force ID of original dump
 
 #define HOTT_TX_packet_LEN	50
@@ -88,7 +86,7 @@ enum {
     HOTT_RX2   = 0x05,
 };
 
-#if defined(TODO_FRSKY)//#ifdef HOTT_FW_TELEMETRY
+#if defined(TODO_FRSKY)//#ifdef HOTT_TELEMETRY
 	#define HOTT_SENSOR_TYPE 6
 	#define HOTT_SENSOR_SEARCH_PERIOD 2000
 	uint8_t HOTT_sensor_cur=0;
@@ -146,7 +144,7 @@ static void HOTT_rf_init()
 	CC2500_WriteReg(CC2500_0C_FSCTRL0, g_model.rfOptionValue1);
 
   CC2500_SetTxRxMode(TX_EN);
-  CC2500_SetPower(TXPOWER_1);
+  CC2500_ManagePower();//CC2500_SetPower(TXPOWER_1);
 
 }
 
@@ -163,7 +161,7 @@ static void HOTT_tune_chan_fast()
 	CC2500_WriteReg(CC2500_0A_CHANNR, (rf_ch_num+1)*3);
 	CC2500_WriteReg(CC2500_25_FSCAL1, calData[rf_ch_num]);
 }
-/*
+
 static void HOTT_tune_freq()
 {
 	if ( freq_fine_mem_p2M != g_model.rfOptionValue1)//freq_fine_mem_p2M != option
@@ -171,10 +169,10 @@ static void HOTT_tune_freq()
 		CC2500_WriteReg(CC2500_0C_FSCTRL0, g_model.rfOptionValue1);
 		CC2500_WriteReg(CC2500_0F_FREQ0, HOTT_FREQ0_VAL + HOTT_COARSE);
 		freq_fine_mem_p2M = g_model.rfOptionValue1 ;
-		send_seq_p2M = HOTT_START;								// Restart the tune process if option is changed to get good tuned values
+		rfState8_p2M = HOTT_START;								// Restart the tune process if option is changed to get good tuned values
 	}
 }
-*/
+
 const uint8_t PROGMEM HOTT_hop[][HOTT_NUM_RF_CHANNELS]=
 	{	{ 48, 37, 16, 62, 9, 50, 42, 22, 68, 0, 55, 35, 21, 74, 1, 56, 31, 20, 70, 11, 45, 32, 24, 71, 8, 54, 38, 26, 61, 13, 53, 30, 15, 65, 7, 52, 34, 28, 60, 3, 47, 39, 18, 69, 2, 49, 44, 23, 72, 5, 51, 43, 19, 64, 12, 46, 33, 17, 67, 6, 58, 36, 29, 73, 14, 57, 41, 25, 63, 4, 59, 40, 27, 66, 10 },
 		{ 50, 23, 5, 34, 67, 53, 22, 12, 39, 62, 51, 21, 10, 33, 63, 59, 16, 1, 43, 66, 49, 19, 8, 30, 71, 47, 24, 2, 35, 68, 45, 25, 14, 41, 74, 55, 18, 4, 32, 61, 54, 17, 11, 31, 72, 52, 28, 6, 38, 65, 46, 15, 9, 40, 60, 48, 26, 3, 37, 70, 58, 29, 0, 36, 64, 56, 20, 7, 42, 69, 57, 27, 13, 44, 73 },
@@ -201,7 +199,7 @@ static void HOTT_TXID_init(uint8_t bind)
 	packet_p2M[1] = pgm_read_word_near( &HOTT_hop_val[num_ch] )>>8;
 
 	for(uint8_t i=0; i<HOTT_NUM_RF_CHANNELS; i++)
-		hopping_frequency[i]=pgm_read_byte_near( &HOTT_hop[num_ch][i] );
+		channel_used_p2M[i]=pgm_read_byte_near( &HOTT_hop[num_ch][i] );
 	#ifdef HOTT_FORCE_ID
 		memcpy(temp_rfid_addr_p2M,"\x7C\x94\x00\x0D\x50",5);	//TX1
 		memcpy(temp_rfid_addr_p2M,"\xEA\x4D\x00\x01\x50",5);	//TX2
@@ -237,18 +235,20 @@ static void HOTT_prep_data_packet()
 
 	packet_p2M[3] = upper;									// used for failsafe and upper channels (only supporting 16 channels)
 	#ifdef FAILSAFE_ENABLE
+	/*
 		static uint8_t failsafe_count=0;
-		if((g_model.rfOptionValue3) && (!HOTT_BIND))//if(IS_FAILSAFE_VALUES_on && IS_BIND_DONE)
+		if((!g_model.rfOptionValue2) && (!HOTT_BIND))//if(IS_FAILSAFE_VALUES_on && IS_BIND_DONE)
 		{
 			failsafe_count++;
 			if(failsafe_count>=3)
 			{
-				g_model.rfOptionValue3=0;//FAILSAFE_VALUES_off;
+				g_model.rfOptionValue2=0;//FAILSAFE_VALUES_off;
 				failsafe_count=0;
 			}
 		}
 		else
 			failsafe_count=0;
+		*/
 	#endif
 
 	// Channels value are PPM*2, -100%=1100µs, +100%=1900µs, order TAER
@@ -289,8 +289,8 @@ static void HOTT_prep_data_packet()
 
 	packet_p2M[28] = 0x80;									// no sensor
 	packet_p2M[29] = 0x02;									// 0x02 when bind starts then when RX replies cycle in sequence 0x1A/22/2A/0A/12, 0x02 during normal packet_p2Ms, 0x01->text config menu, 0x0A->no more RX telemetry
-	#if defined(TODO_FRSKY)//#ifdef HOTT_FW_TELEMETRY
-		if(!HOTT_BIND && HOTT_TELEMETRY)//if(IS_BIND_DONE)
+	#if defined(TODO_FRSKY)//#ifdef HOTT_TELEMETRY
+		if(!HOTT_BIND)//if(IS_BIND_DONE)
 		{
 			static uint8_t prev_SerialRX_val=0;
 			if(HoTT_SerialRX)
@@ -309,9 +309,7 @@ static void HOTT_prep_data_packet()
 				}
 				else
 					packet_p2M[28] = 0x0F;							// RX, no button pressed
-
-        /*see https://github.com/pascallanger/DIY-Multiprotocol-TX-Module/blob/master/Protocols_Details.md#sub_protocol-sync---0*/
-				if(SYNCHRO_MODE)//==HOTT_SYNC (Recommended for best telemetry performance.)
+				if(SYNCHRO_MODE)//==HOTT_SYNC
 					packet_p2M[29] = ((HOTT_sensor_seq+1)<<3) | 1;	// Telemetry packet_p2M sequence
 				else
 					packet_p2M[29] = 0x01;							// 0x01->Text config menu
@@ -319,7 +317,7 @@ static void HOTT_prep_data_packet()
 			else
 			{
 				packet_p2M[28] = 0x89+HOTT_sensor_cur;				// 0x89/8A/8B/8C/8D/8E during normal packet_p2Ms
-				if(SYNCHRO_MODE)//== HOTT_SYNC (Recommended for best telemetry performance.)
+				if(SYNCHRO_MODE)//== HOTT_SYNC
 					packet_p2M[29] = ((HOTT_sensor_seq+1)<<3) | 2;	// Telemetry packet_p2M sequence
 			}
 			//debugln("28=%02X,29=%02X",packet_p2M[28],packet_p2M[29]);
@@ -336,17 +334,17 @@ static void HOTT_prep_data_packet()
 	#endif
 	channel_index_p2M++;
 	channel_index_p2M %= HOTT_NUM_RF_CHANNELS;
-	rf_ch_num=hopping_frequency[channel_index_p2M];
+	rf_ch_num=channel_used_p2M[channel_index_p2M];
 }
 
 uint16_t HOTT_callback()
 {
-	switch(send_seq_p2M)
+	switch(rfState8_p2M)
 	{
 		case HOTT_START:
 			rf_ch_num = 0;
 			HOTT_tune_chan();
-			send_seq_p2M = HOTT_CAL;
+			rfState8_p2M = HOTT_CAL;
 			return 2000*2;
 		case HOTT_CAL:
 		  SCHEDULE_MIXER_END_IN_US(2000*2); // Schedule next Mixer calculations.
@@ -356,17 +354,17 @@ uint16_t HOTT_callback()
 			else
 			{
 				channel_index_p2M = 0;
-				rf_ch_num=hopping_frequency[channel_index_p2M];
+				rf_ch_num=channel_used_p2M[channel_index_p2M];
 				Hott_counter = 0;
 				CC2500_SetTxRxMode(RX_EN);
-				send_seq_p2M = HOTT_DATA1;
+				rfState8_p2M = HOTT_DATA1;
 			}
 			return 2000*2;
 
 		/* Work cycle: 10ms */
 		case HOTT_DATA1:
 		  //Set RF freq, setup LBT and prep packet
-      SCHEDULE_MIXER_END_IN_US(HOTT_PACKET_PERIOD); // Schedule next Mixer calculations.
+			SCHEDULE_MIXER_END_IN_US(HOTT_PACKET_PERIOD); // Schedule next Mixer calculations.
 			//Clear all
 			CC2500_Strobe(CC2500_SIDLE);
 			CC2500_Strobe(CC2500_SNOP);
@@ -375,7 +373,7 @@ uint16_t HOTT_callback()
 			CC2500_WriteReg(CC2500_04_SYNC1, 0xD3);
 			CC2500_WriteReg(CC2500_05_SYNC0, 0x91);
 			//Set RF freq
-			CC2500_ManageFreq();//HOTT_tune_freq();
+			HOTT_tune_freq();
 			HOTT_tune_chan_fast();
 			//Setup LBT
 			CC2500_WriteReg(CC2500_1B_AGCCTRL2, 0xFF);
@@ -387,7 +385,7 @@ uint16_t HOTT_callback()
 			CC2500_WriteReg(CC2500_17_MCSM1, 0x10);		//??
 			CC2500_WriteReg(CC2500_18_MCSM0, 0x18);		//??
 			CC2500_Strobe(CC2500_SRX);					//??
-			send_seq_p2M++;		//HOTT_DATA2
+			rfState8_p2M++;		//HOTT_DATA2
 			return 1095*2;
 		case HOTT_DATA2:
 			//LBT
@@ -402,7 +400,7 @@ uint16_t HOTT_callback()
 			//Send packet_p2M
 			CC2500_SetTxRxMode(TX_EN);
 			CC2500_Strobe(CC2500_STX);
-			send_seq_p2M++;		//HOTT_RX1
+			rfState8_p2M++;		//HOTT_RX1
 			return 3880*2;
 		case HOTT_RX1:
 			//Clear all
@@ -420,7 +418,7 @@ uint16_t HOTT_callback()
 			CC2500_WriteReg(CC2500_1C_AGCCTRL1, 0x09);
 			CC2500_WriteReg(CC2500_06_PKTLEN, HOTT_RX_PACKET_LEN);
 			CC2500_Strobe(CC2500_SRX);
-			send_seq_p2M++;		//HOTT_RX2
+			rfState8_p2M++;		//HOTT_RX2
 			return 4025*2;
 		case HOTT_RX2:
 			//Telemetry
@@ -450,8 +448,8 @@ uint16_t HOTT_callback()
 						HOTT_BIND = 0;//BIND_DONE;
 						HOTT_TXID_init(1);
 					}
-					#if defined(TODO_FRSKY)//#ifdef HOTT_FW_TELEMETRY
-						else if HOTT_TELEMETRY
+					#if defined(TODO_FRSKY)//#ifdef HOTT_TELEMETRY
+						else
 						{	//Telemetry
 							// [0..4] = TXID
 							// [5..9] = RXID
@@ -553,27 +551,24 @@ uint16_t HOTT_callback()
 				}
 			}
 			#if defined(TODO_FRSKY)//#ifdef HOTT_FW_TELEMETRY
-			  if (HOTT_TELEMETRY)
-        {
-          HOTT_packet_count++;
-          if(HOTT_packet_count>=100)
-          {
-            TX_LQI=pps_counter;
-            if(pps_counter==0)
-            { // lost connection with RX, power cycle? research sensors again.
-              HOTT_sensor_cur=3;
-              HOTT_sensor_seq=0;
-              HOTT_sensor_valid=false;
-              for(uint8_t i=0; i<HOTT_SENSOR_TYPE;i++)
-                HOTT_sensor_ok[i]=false;	// no sensors detected
-              Hott_State=HOTT_SENSOR_SEARCH_PERIOD;
-            }
-            pps_counter=HOTT_packet_count=0;
-          }
+				HOTT_packet_count++;
+				if(HOTT_packet_count>=100)
+				{
+					TX_LQI=pps_counter;
+					if(pps_counter==0)
+					{ // lost connection with RX, power cycle? research sensors again.
+						HOTT_sensor_cur=3;
+						HOTT_sensor_seq=0;
+						HOTT_sensor_valid=false;
+						for(uint8_t i=0; i<HOTT_SENSOR_TYPE;i++)
+							HOTT_sensor_ok[i]=false;	// no sensors detected
+						Hott_State=HOTT_SENSOR_SEARCH_PERIOD;
+					}
+					pps_counter=HOTT_packet_count=0;
 				}
 			#endif
 
-			send_seq_p2M=HOTT_DATA1;
+			rfState8_p2M=HOTT_DATA1;
       return 1000 * 2;
 	}
 	return 0;
@@ -600,9 +595,7 @@ static void HOTT_initialise(uint8_t bind)
 	HOTT_TXID_init(bind);
 	HOTT_rf_init();
 
-	#if defined(TODO_FRSKY)//#ifdef HOTT_FW_TELEMETRY
-	if (HOTT_TELEMETRY)
-  {
+	#if defined(TODO_FRSKY)//#ifdef HOTT_TELEMETRY
 		HoTT_SerialRX_val=0;
 		HoTT_SerialRX=false;
 		HOTT_sensor_cur=3;
@@ -613,9 +606,8 @@ static void HOTT_initialise(uint8_t bind)
 			HOTT_sensor_ok[i]=false;	// no sensors detected
 		HOTT_packet_count=0;
 		Hott_State=HOTT_SENSOR_SEARCH_PERIOD;
-  }
 	#endif
-	send_seq_p2M = HOTT_START;
+	rfState8_p2M = HOTT_START;
 
 	PROTO_Start_Callback(HOTT_cb);
 }
@@ -636,13 +628,13 @@ const void *HOTT_Cmds(enum ProtoCmds cmd)
       return 0;
     case PROTOCMD_GETOPTIONS:
       SetRfOptionSettings(pgm_get_far_address(RfOpt_HOTT_Ser),
-                       STR_DUMMY,          //Sub proto
-                       STR_RFTUNEFINE,     //Option 1 (int)
-                       STR_DUMMY,          //Option 2 (int)
-                       STR_RFPOWER,        //Option 3 (uint 0 to 31)
-                       STR_TELEMETRY,      //OptionBool 1
-                       STR_SYNCHRO_MODE,   //OptionBool 2
-                       STR_DUMMY           //OptionBool 3
+                       STR_DUMMY,      //Sub proto
+                       STR_RFTUNEFINE,      //Option 1 (int)
+                       STR_DUMMY,      //Option 2 (int)
+                       STR_RFPOWER,      //Option 3 (uint 0 to 31)
+                       STR_DUMMY,      //OptionBool 1
+                       STR_DUMMY,      //OptionBool 2
+                       STR_DUMMY       //OptionBool 3
                          );
       return 0;
     default:
