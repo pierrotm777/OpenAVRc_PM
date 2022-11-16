@@ -1151,6 +1151,9 @@ enum {
   CC2500,
   NRF24L01,
   MULTIMOD,
+#if (SX1276==YES)
+  SX1276,
+#endif
   TX_MODULE_LAST,
 };
 
