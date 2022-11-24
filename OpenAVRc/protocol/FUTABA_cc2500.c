@@ -51,7 +51,6 @@ const static RfOptionSettingsvar_t RfOpt_SFHSS_Ser[] PROGMEM =
 #define CHAN_MULTIPLIER  100
 #define CHAN_MAX_VALUE (100 * CHAN_MULTIPLIER)
 #define SFHSS_autobind g_model.rfOptionBool2
-#define channel_index_p2M channel_offset_p2M
 
 #define SFHSS_COARSE	0
 
