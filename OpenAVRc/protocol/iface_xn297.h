@@ -1,14 +1,14 @@
 #ifndef _IFACE_XN297_H_
 #define _IFACE_XN297_H_
-
+/*
 #if defined (CC2500_INSTALLED)
 	#include "iface_cc2500.h"
 #endif
 #if defined (NRF24L01_INSTALLED)
 	#include "iface_nrf24l01.h"
 #endif
-
-#if defined (CC2500_INSTALLED) || defined (NRF24L01_INSTALLED)
+*/
+//#if defined (CC2500_INSTALLED) || defined (NRF24L01_INSTALLED)
 
 //////////////////
 // Configuration
@@ -41,6 +41,6 @@ static void __attribute__((unused)) XN297_SetPower();
 static void __attribute__((unused)) XN297_SetFreqOffset();
 static bool __attribute__((unused)) XN297_IsPacketSent();
 
-#endif
+//#endif
 
 #endif

@@ -33,7 +33,10 @@
 
 #include "../OpenAVRc.h"
 
-
+#define MLINK_BIND_P2M           BYTE_P2M(1)
+#define MLINK_SEND_SEQ_P2M       BYTE_P2M(2)
+#define MLINK_CH_IDX_P2M         BYTE_P2M(3)
+#define MLINK_BIND_IDX_P2M       BYTE_P2M(4)
 
 //#define MLINK_FORCE_ID
 #define MLINK_BIND_COUNT	696	// around 20s
@@ -41,10 +44,11 @@
 #define MLINK_BIND_CHANNEL	0x01
 #define MLINK_PACKET_SIZE	8
 
-#define MLINK_BIND rfState8_p2M
 #define MLINK_NUM_WAIT_LOOPS (200 / 5)   //each loop is ~5us.  Do not wait more than 200us TODO measure
 
 uint8_t  crc8;
+uint8_t packet_count_p2M;
+uint32_t MProtocol_id;
 
 //Channel MIN MAX values
 #define CHANNEL_MAX_100	1844	//	+100%
@@ -66,7 +70,7 @@ static void crc8_update(uint8_t byte)
 	crc8 = crc8 ^ byte;
 	for ( uint8_t j = 0; j < 8; j++ )
 		if ( crc8 & 0x80 )
-			crc8 = (crc8<<1) ^ 0x31/*crc8_polynomial*/;//crc8_polynomial  = 0x31;		// Default CRC crc8_polynomial
+			crc8 = (crc8<<1) ^ 0x31;//0x31 = Default CRC crc8_polynomial
 		else
 			crc8 <<= 1;
 }
@@ -112,20 +116,20 @@ uint8_t MLINK_Data_Code[16], MLINK_CRC_Init, MLINK_Unk_6_2;
 
 const uint8_t PROGMEM MLINK_init_vals[][2] = {
 	//Init from dump
-	{ CYRF_01_TX_LENGTH,	0x08 },	// length of packet
-	{ CYRF_02_TX_CTRL,		0x40 },	// Clear TX Buffer
-	{ CYRF_03_TX_CFG,		0x3C }, //0x3E in normal mode, 0x3C in bind mode: SDR 64 chip codes (=8 bytes data code used)
+	{ CYRF_01_TX_LENGTH,	0x08 },	  // length of packet
+	{ CYRF_02_TX_CTRL,		0x40 },	  // Clear TX Buffer
+	{ CYRF_03_TX_CFG,		0x3C },     //0x3E in normal mode, 0x3C in bind mode: SDR 64 chip codes (=8 bytes data code used)
 	{ CYRF_05_RX_CTRL,		0x00 },
-	{ CYRF_06_RX_CFG,		0x93 },	// AGC enabled, overwrite enable, valid flag enable
+	{ CYRF_06_RX_CFG,		0x93 },	    // AGC enabled, overwrite enable, valid flag enable
 	{ CYRF_0B_PWR_CTRL,		0x00 },
 	//{ CYRF_0C_XTAL_CTRL,	0x00 },	// Set to GPIO on reset
-	//{ CYRF_0D_IO_CFG,		0x00 },	// Set to GPIO on reset
+	//{ CYRF_0D_IO_CFG,		0x00 },	  // Set to GPIO on reset
 	//{ CYRF_0E_GPIO_CTRL,	0x00 }, // Set by the CYRF_SetTxRxMode function
-	{ CYRF_0F_XACT_CFG,		0x04 },	// end state idle
+	{ CYRF_0F_XACT_CFG,		0x04 },	  // end state idle
 	{ CYRF_10_FRAMING_CFG,	0x00 },	// SOP disabled
 	{ CYRF_11_DATA32_THOLD,	0x05 }, // not used???
 	{ CYRF_12_DATA64_THOLD,	0x0F }, // 64 Chip Data PN Code Correlator Threshold
-	{ CYRF_14_EOP_CTRL,		0x05 }, // 5 consecutive noncorrelations symbol for EOP
+	{ CYRF_14_EOP_CTRL,		0x05 },   // 5 consecutive noncorrelations symbol for EOP
 	{ CYRF_15_CRC_SEED_LSB,	0x00 }, // not used???
 	{ CYRF_16_CRC_SEED_MSB,	0x00 }, // not used???
 	{ CYRF_1B_TX_OFFSET_LSB,0x00 },
@@ -232,14 +236,14 @@ static void MLINK_send_data_packet()
 
 #ifdef FAILSAFE_ENABLE
 	static uint8_t fs=0;
-	if(IS_FAILSAFE_VALUES_on && send_seq_p2M==MLINK_SEND1)
+	if(IS_FAILSAFE_VALUES_on && MLINK_SEND_SEQ_P2M==MLINK_SEND1)
 	{
 		fs=10;	// Original radio is sending 70 packets
 		FAILSAFE_VALUES_off;
 	}
 	if(fs)
 	{// Failsafe packets
-		switch(send_seq_p2M)
+		switch(MLINK_SEND_SEQ_P2M)
 		{
 			case MLINK_SEND2:
 				packet_p2M[0]=0x06;
@@ -266,18 +270,18 @@ static void MLINK_send_data_packet()
 	else
 #endif
 	{// Normal packets
-		if(channel_index_p2M==0)
+		if(MLINK_CH_IDX_P2M==0)
 			tog=1;
 		//Channels to be sent
-		if(send_seq_p2M==MLINK_SEND1 || ((channel_index_p2M%5==0) && (send_seq_p2M==MLINK_SEND2)))
+		if(MLINK_SEND_SEQ_P2M==MLINK_SEND1 || ((MLINK_CH_IDX_P2M%5==0) && (MLINK_SEND_SEQ_P2M==MLINK_SEND2)))
 		{
-			if((channel_index_p2M&1)==0)
+			if((MLINK_CH_IDX_P2M&1)==0)
 				packet_p2M[0] = 0x09;	//10,8,6
 			else
 				packet_p2M[0] = 0x01;	//11,9,7
 		}
 		else
-			if(send_seq_p2M==MLINK_SEND2)
+			if(MLINK_SEND_SEQ_P2M==MLINK_SEND2)
 			{
 				if(tog)
 					packet_p2M[0] = 0x02;	//x,15,13
@@ -286,8 +290,8 @@ static void MLINK_send_data_packet()
 				tog^=1;
 			}
 			else
-			{//send_seq_p2M==MLINK_SEND3
-				if((channel_index_p2M&1)==0)
+			{//MLINK_SEND_SEQ_P2M==MLINK_SEND3
+				if((MLINK_CH_IDX_P2M&1)==0)
 					packet_p2M[0] = 0x88;	//4,2,0
 				else
 					packet_p2M[0] = 0x80;	//5,3,1
@@ -309,7 +313,7 @@ static void MLINK_send_data_packet()
 	}
 
 	//Calculate CRC
-	crc8=bit_reverse(channel_index_p2M + MLINK_CRC_Init);	// Init = relected freq index + offset
+	crc8=bit_reverse(MLINK_CH_IDX_P2M + MLINK_CRC_Init);	// Init = relected freq index + offset
 	for(uint8_t i=0;i<MLINK_PACKET_SIZE-1;i++)
 		crc8_update(bit_reverse(packet_p2M[i]));
 	packet_p2M[7] = bit_reverse(crc8);			// CRC reflected out
@@ -319,7 +323,7 @@ static void MLINK_send_data_packet()
 
 	//Debug
 	//#if 0
-		//debug("P(%02d):",channel_index_p2M);
+		//debug("P(%02d):",MLINK_CH_IDX_P2M);
 		//for(uint8_t i=0;i<8;i++)
 			//debug(" %02X",packet_p2M[i]);
 		//debugln("");
@@ -332,21 +336,21 @@ static void MLINK_send_data_packet()
 		telemetry_counter += 2;				// TX LQI counter
 		telemetry_link = 1;
 
-		if(rxBuf[0]==0x13)
+		if(telem_save_data_buff[0]==0x13)
 		{ // RX-9-DR : 13 1A C8 00 01 64 00
 			uint8_t id;
 			for(uint8_t i=1; i<5; i+=3)
 			{//2 sensors per packet
 				id=0x00;
-				switch(rxBuf[i]&0x0F)
+				switch(telem_save_data_buff[i]&0x0F)
 				{
 					case 1: //voltage
-						if((rxBuf[i]&0xF0) == 0x00)
-							//v_lipo1 = rxBuf[i+1];		// Rx_Batt*20
-							telemetryData.analog[TELEM_ANA_A1].set(rxBuf[i+1], g_model.telemetry.channels[TELEM_ANA_A1].type);
+						if((telem_save_data_buff[i]&0xF0) == 0x00)
+							//v_lipo1 = telem_save_data_buff[i+1];		// Rx_Batt*20
+							telemetryData.analog[TELEM_ANA_A1].set(telem_save_data_buff[i+1], g_model.telemetry.channels[TELEM_ANA_A1].type);
 						else
-							//v_lipo2 = rxBuf[i+1];
-							telemetryData.analog[TELEM_ANA_A2].set(rxBuf[i+1], g_model.telemetry.channels[TELEM_ANA_A2].type);
+							//v_lipo2 = telem_save_data_buff[i+1];
+							telemetryData.analog[TELEM_ANA_A2].set(telem_save_data_buff[i+1], g_model.telemetry.channels[TELEM_ANA_A2].type);
 						break;
 					case 2: //current
 						id = 0x28;
@@ -361,24 +365,24 @@ static void MLINK_send_data_packet()
 						id = 0x02;
 						break;
 					case 10: //lqi
-						RX_RSSI=RX_LQI=rxBuf[i+1]>>1;
+						RX_RSSI=RX_LQI=telem_save_data_buff[i+1]>>1;
 						break;
 				}
 				#if defined HUB_TELEMETRY
 					if(id)
 					{
-						uint16_t val=((rxBuf[i+2]&0x80)<<8)|((rxBuf[i+2]&0x7F)<<7)|(rxBuf[i+1]>>1);	//remove the alarm LSB bit, move the sign bit to MSB
+						uint16_t val=((telem_save_data_buff[i+2]&0x80)<<8)|((telem_save_data_buff[i+2]&0x7F)<<7)|(telem_save_data_buff[i+1]>>1);	//remove the alarm LSB bit, move the sign bit to MSB
 						frsky_send_user_frame(id, val, val>>8);
 					}
 				#endif
 			}
 		}
 		else
-			if(rxBuf[0]==0x03)
+			if(telem_save_data_buff[0]==0x03)
 			{ // RX-5 :    03 15 23 00 00 01 02
 				//Incoming packet values
-				RX_RSSI = rxBuf[2]<<1;	// Looks to be the RX RSSI value
-				RX_LQI  = rxBuf[5];		// Looks to be connection lost
+				RX_RSSI = telem_save_data_buff[2]<<1;	// Looks to be the RX RSSI value
+				RX_LQI  = telem_save_data_buff[5];		// Looks to be connection lost
 			}
 			else
 				RX_RSSI = TX_LQI;
@@ -415,15 +419,15 @@ static void MLINK_send_data_packet()
 
 uint16_t MLINK_callback()
 {
-	uint8_t status, len;
+	uint8_t MLINK_Status, len;
 	uint16_t start;
 
-	switch(send_seq_p2M)
+	switch(MLINK_SEND_SEQ_P2M)
 	{
 		case MLINK_BIND_RX:
 			////debugln("RX");
-			status=CYRF_ReadRegister(CYRF_05_RX_CTRL);
-			if( (status&0x80) == 0 )
+			MLINK_Status=CYRF_ReadRegister(CYRF_05_RX_CTRL);
+			if( (MLINK_Status&0x80) == 0 )
 			{//Packet received
 				len=CYRF_ReadRegister(CYRF_09_RX_COUNT);
 				//debugln("L=%02X",len)
@@ -460,21 +464,21 @@ uint16_t MLINK_callback()
 			CYRF_WriteRegister(CYRF_29_RX_ABORT, 0x20);		// Enable RX abort
 			CYRF_WriteRegister(CYRF_0F_XACT_CFG, 0x24);		// Force end state
 			CYRF_WriteRegister(CYRF_29_RX_ABORT, 0x00);		// Disable RX abort
-			send_seq_p2M=MLINK_BIND_TX;							// Retry sending bind packet
+			MLINK_SEND_SEQ_P2M=MLINK_BIND_TX;							// Retry sending bind packet
 			CYRF_SetTxRxMode(TX_EN);						// Transmit mode
 			if(packet_count_p2M)
 				return 18136*2;
 		case MLINK_BIND_TX:
-			if(--bind_counter_p2M==0 || packet_count_p2M>=0x1B*2)
+			if(--MLINK_BIND_IDX_P2M==0 || packet_count_p2M>=0x1B*2)
 			{ // Switch to normal mode
-				MLINK_BIND = 0;//BIND_DONE;
-				send_seq_p2M=MLINK_PREP_DATA;
+				MLINK_BIND_P2M = 0;//BIND_DONE;
+				MLINK_SEND_SEQ_P2M=MLINK_PREP_DATA;
 				return 22720*2;
 			}
 			MLINK_send_bind_packet();
 			if(packet_count_p2M == 0 || packet_count_p2M > 0x19*2)
 			{
-				send_seq_p2M++;		// MLINK_BIND_PREP_RX
+				MLINK_SEND_SEQ_P2M++;		// MLINK_BIND_PREP_RX
 				return 4700*2;	// Original is 4900
 			}
 			packet_count_p2M++;
@@ -482,67 +486,66 @@ uint16_t MLINK_callback()
 				return 6000*2;
 			return 22720*2;
 		case MLINK_BIND_PREP_RX:
-			//start=micros();
-			//while ((uint16_t)((uint16_t)micros()-(uint16_t)start) < 200)	// Wait max 200µs for TX to finish
-			//	if((CYRF_ReadRegister(CYRF_02_TX_CTRL) & 0x80) == 0x00)
-			//		break;										// Packet transmission complete
-			receive_seq_p2M = 0;
-      while ((CYRF_ReadRegister(CYRF_02_TX_CTRL) & 0x80) == 0x00) // Wait max 200µs for TX
-        if(++receive_seq_p2M > MLINK_NUM_WAIT_LOOPS)
-          break;// Packet transmission complete
+		  {
+			uint8_t i = MLINK_NUM_WAIT_LOOPS;
+			while(i--)// Wait max 200µs for TX
+			{
+			  if((CYRF_ReadRegister(CYRF_02_TX_CTRL) & 0x80) == 0x00)
+			  {
+				break;// Packet transmission complete
+			  }
+			}
+		  }
 			CYRF_SetTxRxMode(RX_EN);							// Receive mode
 			CYRF_WriteRegister(CYRF_05_RX_CTRL, 0x82);			// Prepare to receive
-			send_seq_p2M++;	//MLINK_BIND_RX
+			MLINK_SEND_SEQ_P2M++;	//MLINK_BIND_RX
 			if(packet_count_p2M > 0x19*2)
 				return 28712*2;									// Give more time to the RX to confirm that the bind is ok...
 			return (28712-4700)*2;
-
-
 		case MLINK_PREP_DATA:
 			CYRF_ConfigDataCode(MLINK_Data_Code,16);
 			MLINK_CRC_Init += 0xED;
-			channel_index_p2M = 0x00;
-			CYRF_ConfigRFChannel(channel_used_p2M[channel_index_p2M]);
-			CYRF_SetPower(0x38);
+			MLINK_CH_IDX_P2M = 0x00;
+			CYRF_ConfigRFChannel(channel_used_p2M[MLINK_CH_IDX_P2M]);
+			CYRF_WriteRegister(CYRF_03_TX_CFG,0x38);//CYRF_SetPower(0x38);
 			#if defined(MLINK_HUB_TELEMETRY) || defined(MLINK_FW_TELEMETRY)
 				packet_count_p2M = 0;
 				telemetry_lost = 1;
 			#endif
-			send_seq_p2M++;
-
-
+			MLINK_SEND_SEQ_P2M++;
 		case MLINK_SEND1:
 			MLINK_send_data_packet();
-			send_seq_p2M++;
+			MLINK_SEND_SEQ_P2M++;
 			return (4880+1111)*2;
 		case MLINK_SEND2:
+		  SCHEDULE_MIXER_END_IN_US((4617+1422)*2);
 			MLINK_send_data_packet();
-			send_seq_p2M++;
-			if(channel_index_p2M%5==0)
+			MLINK_SEND_SEQ_P2M++;
+			if(MLINK_CH_IDX_P2M%5==0)
 				return (4617+1017)*2;
 			return (4617+1422)*2;
 		case MLINK_SEND3:
 			MLINK_send_data_packet();
-			send_seq_p2M++;
+			MLINK_SEND_SEQ_P2M++;
 			return 4611*2;
 		case MLINK_CHECK3:
 			//Switch to next channel
-			channel_index_p2M++;
-			if(channel_index_p2M>=MLINK_NUM_FREQ)
-				channel_index_p2M=0;
-			CYRF_ConfigRFChannel(channel_used_p2M[channel_index_p2M]);
+			MLINK_CH_IDX_P2M++;
+			if(MLINK_CH_IDX_P2M>=MLINK_NUM_FREQ)
+				MLINK_CH_IDX_P2M=0;
+			CYRF_ConfigRFChannel(channel_used_p2M[MLINK_CH_IDX_P2M]);
 
 			//Receive telemetry
-			if(channel_index_p2M%5==0)
+			if(MLINK_CH_IDX_P2M%5==0)
 			{//Receive telemetry
 				CYRF_SetTxRxMode(RX_EN);							// Receive mode
 				CYRF_WriteRegister(CYRF_05_RX_CTRL, 0x82);			// Prepare to receive
-				send_seq_p2M++;	//MLINK_RX
+				MLINK_SEND_SEQ_P2M++;	//MLINK_RX
 				return (8038+2434+410-1000)*2;
 			}
 			else
-				CYRF_SetPower(0x38);
-			send_seq_p2M=MLINK_SEND1;
+				CYRF_WriteRegister(CYRF_03_TX_CFG,0x38);//CYRF_SetPower(0x38);
+			MLINK_SEND_SEQ_P2M=MLINK_SEND1;
 			return 4470*2;
 		case MLINK_RX:
 			#if defined(MLINK_HUB_TELEMETRY) || defined(MLINK_FW_TELEMETRY)
@@ -557,18 +560,15 @@ uint16_t MLINK_callback()
 					telemetry_counter = 0;
 				}
 			#endif
-			status=CYRF_ReadRegister(CYRF_05_RX_CTRL);
-			//debug("T(%02X):",status);
-			if( (status&0x80) == 0 )
+			MLINK_Status=CYRF_ReadRegister(CYRF_05_RX_CTRL);
+			//debug("T(%02X):",MLINK_Status);
+			if( (MLINK_Status&0x80) == 0 )
 			{//Packet received
 				len=CYRF_ReadRegister(CYRF_09_RX_COUNT);
 				//debug("(%X)",len)
 				if( len && len <= MLINK_PACKET_SIZE )
 				{
-				  // use a part of the channels buffer [50]
-          uint8_t * rxBuf = &pulses2MHz.pbyte[CHANNEL_USED_OFFSET + MLINK_NUM_FREQ]; //Use 50 Channel MAX -> 29 free bytes
-
-					CYRF_ReadDataPacketLen(rxBuf, len*2);
+					CYRF_ReadDataPacketLen(telem_save_data_buff, len*2);
 					#if defined(MLINK_HUB_TELEMETRY) || defined(MLINK_FW_TELEMETRY)
 						if(len==MLINK_PACKET_SIZE)
 						{
@@ -577,11 +577,11 @@ uint16_t MLINK_callback()
 							crc8=bit_reverse(MLINK_CRC_Init);
 							for(uint8_t i=0;i<MLINK_PACKET_SIZE-1;i++)
 							{
-								rxBuf[i]=rxBuf[i<<1];
-								crc8_update(bit_reverse(rxBuf[i]));
-								//debug(" %02X",rxBuf[i]);
+								telem_save_data_buff[i]=telem_save_data_buff[i<<1];
+								crc8_update(bit_reverse(telem_save_data_buff[i]));
+								//debug(" %02X",telem_save_data_buff[i]);
 							}
-							if(rxBuf[14] == bit_reverse(crc8))	// Packet CRC is ok
+							if(telem_save_data_buff[14] == bit_reverse(crc8))	// Packet CRC is ok
 								MLINK_Send_Telemetry();
 							//else
 								//debug(" NOK");
@@ -594,7 +594,7 @@ uint16_t MLINK_callback()
 			CYRF_WriteRegister(CYRF_0F_XACT_CFG, 0x24);		// Force end state
 			CYRF_WriteRegister(CYRF_29_RX_ABORT, 0x00);		// Disable RX abort
 			CYRF_SetTxRxMode(TX_EN);						// Transmit mode
-			send_seq_p2M=MLINK_SEND2;
+			MLINK_SEND_SEQ_P2M=MLINK_SEND2;
 			heartbeat |= HEART_TIMER_PULSES;
       CALCULATE_LAT_JIT(); // Calculate latency and jitter.
 			return 1000*2;
@@ -604,11 +604,12 @@ uint16_t MLINK_callback()
 
 static void MLINK_shuffle_freqs(uint32_t seed, uint8_t *hop)
 {
-	srandom(seed & 0xfefefefe);//randomSeed(seed);
+	srandom(seed);//randomSeed(seed);
 
 	for(uint8_t i=0; i < MLINK_NUM_FREQ/2; i++)
 	{
-		uint8_t r   = random()% (MLINK_NUM_FREQ/2);
+	  srandom(0xfefefefe);
+		uint8_t r   = random() % (MLINK_NUM_FREQ/2);
 		uint8_t tmp = hop[r];
 		hop[r] = hop[i];
 		hop[i] = tmp;
@@ -625,15 +626,21 @@ void MLINK_init()
 		channel_used_p2M[i                 ] = (i<<1) + 3;
 		channel_used_p2M[i+MLINK_NUM_FREQ/2] = (i<<1) + 3;
 	}
+
+  // Load temp_rfid_addr_p2M + Model match. (DEVO)
+  MProtocol_id = temp_rfid_addr_p2M[0];
+  MProtocol_id ^= (RXNUM*3);
+
+
 	// part1
 	memcpy(MLINK_Data_Code  ,temp_rfid_addr_p2M,4);
-	MLINK_shuffle_freqs(g_eeGeneral.fixed_ID.ID_32, channel_used_p2M);
+	MLINK_shuffle_freqs(MProtocol_id, channel_used_p2M);
 
-	// part2
-	g_eeGeneral.fixed_ID.ID_32 ^= 0x6FBE3201;
-	set_temp_rfid_addr_p2M(g_eeGeneral.fixed_ID.ID_32);
+		// part2
+	MProtocol_id ^= 0x6FBE3201;
+	set_temp_rfid_addr_p2M(MProtocol_id);
 	memcpy(MLINK_Data_Code+4,temp_rfid_addr_p2M,4);
-	MLINK_shuffle_freqs(g_eeGeneral.fixed_ID.ID_32, &channel_used_p2M[MLINK_NUM_FREQ/2]);
+	MLINK_shuffle_freqs(MProtocol_id, &channel_used_p2M[MLINK_NUM_FREQ/2]);
 
 	// part3
 	MLINK_CRC_Init = temp_rfid_addr_p2M[3];		//value sent during bind then used to init the CRC
@@ -676,16 +683,16 @@ void MLINK_init()
 		//debug(" %02X", channel_used_p2M[i]);
 	//debugln("");
 
-	if(MLINK_BIND)//if(IS_BIND_IN_PROGRESS)
+	if(MLINK_BIND_P2M)//if(IS_BIND_IN_PROGRESS)
 	{
 		packet_count_p2M = 0;
-		bind_counter_p2M = MLINK_BIND_COUNT;
+		MLINK_BIND_IDX_P2M = MLINK_BIND_COUNT;
 		CYRF_ConfigDataCode((uint8_t*)"\x6F\xBE\x32\x01\xDB\xF1\x2B\x01\xE3\x5C\xFA\x02\x97\x93\xF9\x02",16); //Bind data code
 		CYRF_ConfigRFChannel(MLINK_BIND_CHANNEL);
-		send_seq_p2M = MLINK_BIND_TX;
+		MLINK_SEND_SEQ_P2M = MLINK_BIND_TX;
 	}
 	else
-		send_seq_p2M = MLINK_PREP_DATA;
+		MLINK_SEND_SEQ_P2M = MLINK_PREP_DATA;
 }
 
 static uint16_t MLINK_cb()
@@ -699,7 +706,7 @@ static uint16_t MLINK_cb()
 static void MLINK_initialize(uint8_t bind)
 {
   CYRF_Reset();
-  MLINK_BIND = bind;
+  MLINK_BIND_P2M = bind;
   MLINK_init();
   PROTO_Start_Callback( MLINK_cb);
 }

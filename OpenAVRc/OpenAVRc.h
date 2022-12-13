@@ -1110,10 +1110,6 @@ const pm_char STR_OPENAVRCISLOADING[] PROGMEM = "OpenAVRc is loading ...";
   FORCEINLINE void Xany_scheduleTx_AllInstance();
 #endif
 
-#if (PCM_PROTOCOL==YES)
-#include "protocol/PROTO_PCM.h"
-#endif
-
 #if (SERIAL_PROTOCOL==MULTIMODULE)
 PACK(
 struct mm_protocol_definition {
@@ -1151,9 +1147,6 @@ enum {
   CC2500,
   NRF24L01,
   MULTIMOD,
-#if (SX1276==YES)
-  SX1276,
-#endif
   TX_MODULE_LAST,
 };
 

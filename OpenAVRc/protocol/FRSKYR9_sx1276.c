@@ -51,12 +51,12 @@
 // Telemetry
 //#define TELEMETRY_BUFFER_SIZE 32
 //uint8_t telem_save_data_p2M[TELEMETRY_BUFFER_SIZE];//telemetry receiving packets
-uint8_t v_lipo1;
-uint8_t v_lipo2;
-uint8_t RX_RSSI;
-uint8_t TX_RSSI;
-uint8_t RX_LQI;
-uint8_t TX_LQI;
+//uint8_t v_lipo1;
+//uint8_t v_lipo2;
+//uint8_t RX_RSSI;
+//uint8_t TX_RSSI;
+//uint8_t RX_LQI;
+//uint8_t TX_LQI;
 uint8_t  len;
 uint16_t pps_counter;
 
@@ -94,14 +94,6 @@ enum {
 	FRSKYR9_RX2,
 };
 
-//uint8_t  RX_num;
-//uint8_t  temp_rfid_addr_p2M[5];
-//uint8_t g_model.rfSubType;
-uint8_t  binding_idx;
-//uint8_t  packet_p2M[50];
-uint8_t  packet_length;
-uint8_t  bindR9mode;
-
 const uint16_t PROGMEM FrSkyX_CRC_Short[]={
 	0x0000, 0x1189, 0x2312, 0x329B, 0x4624, 0x57AD, 0x6536, 0x74BF,
 	0x8C48, 0x9DC1, 0xAF5A, 0xBED3, 0xCA6C, 0xDBE5, 0xE97E, 0xF8F7 };
@@ -137,13 +129,10 @@ uint8_t protocol_flags=0,protocol_flags2=0,protocol_flags3=0;
 //uint8_t send_seq_p2M;
 //uint8_t FrSkyFormat=0;
 
-#define NUM_CHN 16
-uint16_t Channel_data[NUM_CHN];
-
 // Channel value for FrSky (PPM is multiplied by 1.5)
 uint16_t convert_channel_frsky(uint8_t num)
 {
-	uint16_t val=Channel_data[num];
+	uint16_t val=FULL_CHANNEL_OUTPUTS(num);
 	return ((val*15)>>4)+1290;
 }
 
@@ -240,7 +229,7 @@ void FrSkyR9_set_frequency()
 	switch(g_model.rfSubType)//switch(sub_protocol & 0xFD)
 	{
 		case 1://R9_868://g_model.rfSubType=1
-			if(FRSKYR9_BIND)//IS_BIND_DONE							// if bind is in progress use R9_915 instead
+			if(!FRSKYR9_BIND)//IS_BIND_DONE							// if bind is in progress use R9_915 instead
 			{
 				channel_index_p2M %= FLEX_FREQ;
 				num=channel_index_p2M;
@@ -297,7 +286,7 @@ static void FrSkyR9_build_packet()
 	//Channels
 	FrSkyX_channels(6);					// Set packet_p2M[6]=failsafe, packet_p2M[7]=0?? and packet_p2M[8..19]=channels data
 	//Bind
-	if(bindR9mode)// bind in progress
+	if(FRSKYR9_BIND)// bind in progress
 	{/* 915 0x01=CH1-8_TELEM_ON
 	        0x41=CH1-8_TELEM_OFF
 	        0xC1=CH9-16_TELEM_OFF
@@ -306,9 +295,9 @@ static void FrSkyR9_build_packet()
 		packet_p2M[6] = 0x01;				// bind indicator
 		if(g_model.rfSubType&1) //if(sub_protocol & 1)
 			packet_p2M[6] |= 0x20;			// 868
-		if(binding_idx&0x01)
+		if(binding_idx_p2M&0x01)
 			packet_p2M[6] |= 0x40;			// telem OFF
-		if(binding_idx&0x02)
+		if(binding_idx_p2M&0x02)
 			packet_p2M[6] |= 0x80;			// ch9-16
 	}
 	//Sequence and send SPort
@@ -348,21 +337,21 @@ static void FrSkyR9_build_EU_packet()
 	//Hopping
 	packet_p2M[3] = channel_skip_p2M;		// step size and last 2 channels start index
 	//RX number
-	packet_p2M[4] = g_model.modelId;//RX_num;					// receiver number from OpenTX
+	packet_p2M[4] = RXNUM;//RX_num;					// receiver number from OpenTX
 	//Channels
 	//TODO FrSkyX_channels(5,4);			// Set packet_p2M[5]=failsafe and packet_p2M[6..11]=4 channels data
 
 	//Bind
-	if(bindR9mode)// bind in progress
+	if(FRSKYR9_BIND)// bind in progress
 	{
 		packet_p2M[5] = 0x01;				// bind indicator
 		if(!X8MODE)//if((sub_protocol & 2) == 0)
 			packet_p2M[5] |= 0x10;			// 16CH
 		// if(sub_protocol & 1)
 			// packet_p2M[5] |= 0x20;			// 868
-		if(binding_idx&0x01)
+		if(binding_idx_p2M&0x01)
 			packet_p2M[5] |= 0x40;			// telem OFF
-		if(binding_idx&0x02)
+		if(binding_idx_p2M&0x02)
 			packet_p2M[5] |= 0x80;			// ch9-16
 	}
 
@@ -372,9 +361,6 @@ static void FrSkyR9_build_EU_packet()
 	//CRC
 	packet_p2M[13] = FrSkyR9_CRC8(packet_p2M, 13);
 }
-
-const static uint8_t ZZ_FRSKYR9InitSequence[] PROGMEM = {
-};
 
 static void FRSKYR9_init()
 {
@@ -388,7 +374,7 @@ static void FRSKYR9_init()
 	#endif
 
 	//Reset ID
-	set_temp_rfid_addr_p2M(g_model.modelId);
+	set_temp_rfid_addr_p2M(RXNUM);
 
 	//channel_skip_p2M
 	//channel_skip_p2M = 1 + (random(0xfefefefe) % 24);
@@ -408,9 +394,9 @@ static void FRSKYR9_init()
 
 	//EU packet length
 	if(FLEXEUMODE)//if( (sub_protocol & 0xFD) == R9_EU )
-		packet_length=14;
+		packetSize_p2M=14;
 	else
-		packet_length=26;
+		packetSize_p2M=26;
 
 	//SX1276 Init
 	SX1276_SetMode(true, false, SX1276_OPMODE_SLEEP);
@@ -431,8 +417,8 @@ static void FRSKYR9_init()
 	SX1276_SetHopPeriod(0);										// 0 = disabled, we hop frequencies manually
 	//RF Power
 	SX1276_SetPaDac(false);										// Disable 20dBm mode
-	//SX1276_SetPaConfig(true, 7, g_model.rfOptionValue3);			// Use PA_HP on PA_BOOST, power=17-(15-option) dBm with option equal or lower to 15
-	SX1276_ManagePower();
+	SX1276_SetPaConfig(true, 7, g_model.rfOptionValue3);			// Use PA_HP on PA_BOOST, power=17-(15-option) dBm with option equal or lower to 15
+	//SX1276_ManagePower();
 	SX1276_SetOcp(true,27);										// Set OCP to max 240mA
 	SX1276_SetTxRxMode(TX_EN);								// Set RF switch to TX
 	//Enable all IRQ flags
@@ -463,7 +449,7 @@ static uint16_t FrSkyR9_callback()
       SX1276_ManagePower();//pour test
 
 			//Build packet
-			if( packet_length == 26 )
+			if( packetSize_p2M == 26 )
 				FrSkyR9_build_packet();
 			else
 				FrSkyR9_build_EU_packet();
@@ -473,7 +459,7 @@ static uint16_t FrSkyR9_callback()
 			//Set RF switch to TX
 			SX1276_SetTxRxMode(TX_EN);
 			//Send packet
-			SX1276_WritePayloadToFifo(packet_p2M, packet_length);
+			SX1276_WritePayloadToFifo(packet_p2M, packetSize_p2M);
 			SX1276_SetMode(true, false, SX1276_OPMODE_TX);
 #if not defined (FRSKY)
 			send_seq_p2M=FRSKYR9_FREQ;
@@ -511,23 +497,24 @@ static uint16_t FrSkyR9_callback()
               frskyX_check_telemetry(telem_save_data_p2M, 13);
             }
 #endif
-/*
+
 					if( telem_save_data_p2M[9]==temp_rfid_addr_p2M[1] && telem_save_data_p2M[10]==temp_rfid_addr_p2M[2] && FrSkyX_crc(telem_save_data_p2M, 11, temp_rfid_addr_p2M[1]+(temp_rfid_addr_p2M[2]<<8))==(telem_save_data_p2M[11]+(telem_save_data_p2M[12]<<8)) )
 					{
 						if(telem_save_data_p2M[0]&0x80)
-							RX_RSSI=telem_save_data_p2M[0]<<1;
+							telemetryData.rssi[0].set(telem_save_data_p2M[0]<<1);//RX_RSSI=telem_save_data_p2M[0]<<1;
 						else
-							v_lipo1=(telem_save_data_p2M[0]<<1)+1;
+							telemetryData.analog[TELEM_ANA_A1].set((telem_save_data_p2M[0]<<1)+1);//v_lipo1=(telem_save_data_p2M[0]<<1)+1;
 						//TX_LQI=~(SX1276_ReadReg(SX1276_19_PACKETSNR)>>2)+1;
-						TX_RSSI=SX1276_ReadReg(SX1276_1A_PACKETRSSI)-157;
+						telemetryData.rssi[1].set(SX1276_ReadReg(SX1276_1A_PACKETRSSI)-157);//TX_RSSI=SX1276_ReadReg(SX1276_1A_PACKETRSSI)-157;
 						for(uint8_t i=0;i<9;i++)
 							packet_p2M[4+i]=telem_save_data_p2M[i];			// Adjust buffer to match FrSkyX
-						//frsky_process_telemetry(packet,len);	// Process telemetry packet
+						//frsky_process_telemetry(packet_p2M,len);	// Process telemetry packet
+						frskyStreaming = frskyStreaming ? FRSKY_TIMEOUT10ms : FRSKY_TIMEOUT_FIRST;
 						pps_counter++;
 						if(TX_LQI==0)
 							TX_LQI++;							// Recover telemetry right away
 					}
-*/
+
 				}
 			}
 /*

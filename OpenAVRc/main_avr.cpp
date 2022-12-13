@@ -37,6 +37,7 @@ extern uint8_t checkTrim(uint8_t event);
 
 void perMain()
 {
+
   SIMU_PROCESSEVENTS;
   LEDON();
   uint16_t t0 = getTmr64uS();

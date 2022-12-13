@@ -31,11 +31,9 @@
 */
 #include "../OpenAVRc.h"
 
-const pm_char STR_SUBTYPE_V911S[] PROGMEM = "V911S";
-
 const static RfOptionSettingsvar_t RfOpt_V911S_Ser[] PROGMEM =
 {
-  /*rfProtoNeed*/PROTO_NEED_SPI | BOOL1USED | BOOL2USED, //can be PROTO_NEED_SPI | BOOL1USED | BOOL2USED | BOOL3USED
+  /*rfProtoNeed*/PROTO_NEED_SPI | BOOL2USED, //can be PROTO_NEED_SPI | BOOL1USED | BOOL2USED | BOOL3USED
   /*rfSubTypeMax*/0,
   /*rfOptionValue1Min*/0, // FREQFINE MIN
   /*rfOptionValue1Max*/0,  // FREQFINE MAX
@@ -44,40 +42,22 @@ const static RfOptionSettingsvar_t RfOpt_V911S_Ser[] PROGMEM =
   /*rfOptionValue3Max*/3,    // RF POWER
 };
 
-
-#define V911S_BIND_COUNT      1000
-#define V911S_PACKET_PERIOD   5000 // Timeout for callback in uSec
-#define V911S_BIND_PACKET_PERIOD    3300
-//printf inside an interrupt handler is really dangerous
-//this shouldn't be enabled even in debug builds without explicitly
-//turning it on
-//#define dbgprintf if(0) printf
-
 //#define V911S_ORIGINAL_ID
 
+#define V911S_PACKET_PERIOD         5000 // Timeout for callback in uSec
+#define V911S_BIND_PACKET_PERIOD    3300
 #define V911S_INITIAL_WAIT          500
 #define V911S_PACKET_SIZE           16
 #define V911S_RF_BIND_CHANNEL       35
 #define V911S_NUM_RF_CHANNELS       8
-#define NUM_OUT_CHANNELS            5//ajout PM
+#define V911S_BIND_COUNT            800
 
+#define NUM_OUT_CHANNELS            5//ajout PM
 #define CHAN_MAX_VALUE              2000
 #define CHAN_MIN_VALUE              1000
 
-
-uint8_t tx_power = 3;// 0 to 3
 #define V911S_RF_CH_NUM channel_offset_p2M
-//static uint16_t bind_idx_p2M;
 uint16_t packetV911s_period;
-//extern volatile int32_t Channels[NUM_OUT_CHANNELS];
-
-/*
-enum V911S
-{
- V911S	 = 0,
- E119	 = 1,
-};
-*/
 
 enum{
     V911S_BIND,
@@ -86,8 +66,11 @@ enum{
 
 // flags going to packet[1]
 #define V911S_FLAG_EXPERT   0x04
+//#define	E119_FLAG_EXPERT	  0x08	//0x00 low, 0x08 high
+//#define	E119_FLAG_CALIB		  0x40
 // flags going to packet[2]
 #define V911S_FLAG_CALIB    0x01
+//#define A220_FLAG_6G3D		  0x04
 
 // For code readability
 enum {
@@ -102,6 +85,15 @@ enum {
 // Bit vector from bit position
 #define BV(bit) (1 << bit)
 
+/*
+// Channel value 100% is converted to value scaled
+int16_t convert_channel_16b_limit(uint8_t num,int16_t min,int16_t max)
+{
+	int32_t val=limit_channel_100(num);			// 204<->1844
+	val=(val-CHANNEL_MIN_100)*(max-min)/(CHANNEL_MAX_100-CHANNEL_MIN_100)+min;
+	return (uint16_t)val;
+}
+*/
 #define CHAN_RANGE (CHAN_MAX_VALUE - CHAN_MIN_VALUE)
 static uint16_t scale_channel(uint8_t ch, uint16_t destMin, uint16_t destMax)
 {
@@ -140,9 +132,10 @@ static void V911S_send_packet(uint8_t bind)
         if(V911S_RF_CH_NUM&2)
             channel=7-channel;
         packet_p2M[ 0]=(V911S_RF_CH_NUM<<3)|channel;
-        packet_p2M[ 1]=V911S_FLAG_EXPERT; // short press on left button
-        packet_p2M[ 2]=GET_FLAG(CHANNEL_CALIB,V911S_FLAG_CALIB); // long  press on right button
-        memset(packet_p2M+3, 0x00, V911S_PACKET_SIZE - 3);
+        packet_p2M[ 1]=V911S_FLAG_EXPERT; // CH6_SW short press on left button
+        packet_p2M[ 2]=GET_FLAG(CHANNEL_CALIB,V911S_FLAG_CALIB); // CH5_SW long  press on right button
+        //memset(packet_p2M+3, 0x00, V911S_PACKET_SIZE - 3);
+        memset(packet_p2M+1, 0x00, V911S_PACKET_SIZE - 1);
         //packet_p2M[3..6]=trims TAER signed
         uint16_t ch=scale_channel(CHANNEL3 ,0,0x7FF);// throttle
         packet_p2M[ 7] = ch;
@@ -171,16 +164,10 @@ static void V911S_send_packet(uint8_t bind)
     NRF24L01_FlushTx();
     XN297_WritePayload(packet_p2M, V911S_PACKET_SIZE);
 
-
-    //if (tx_power != Model.tx_power) {
-        //Keep transmit power updated
-    //    tx_power = Model.tx_power;
-        NRF24L01_ManagePower();//NRF24L01_SetPower(tx_power);
-    //}
-
+    NRF24L01_ManagePower();
 }
 
-static void V911S_init()
+static void V911S_RF_init()
 {
     NRF24L01_Initialize();
     NRF24L01_SetTxRxMode(TX_EN);
@@ -198,21 +185,6 @@ static void V911S_init()
 
 static void V911S_initialize_txid()
 {
-/*
-    uint32_t lfsr = 0xb2c54a2ful;
-    uint8_t i,j;
-
-#ifndef USE_FIXED_MFGID
-    uint8_t var[12];
-    MCU_SerialNumber(var, 12);
-    dbgprintf("Manufacturer id: ");
-    for (i = 0; i < 12; ++i) {
-        dbgprintf("%02X", var[i]);
-        rand32_r(&lfsr, var[i]);
-    }
-    dbgprintf("\r\n");
-#endif
-*/
 	//channels
 	uint8_t offset=temp_rfid_addr_p2M[3]%5;				// 0-4
 	for(uint8_t i=0;i<V911S_NUM_RF_CHANNELS;i++)
@@ -221,7 +193,9 @@ static void V911S_initialize_txid()
 
 	// channels order
 	//V911S_RF_CH_NUM=random(0xfefefefe)&0x03;			// 0-3
-	srandom(g_eeGeneral.fixed_ID.ID_32 & 0xfefefefe);
+	//srandom(g_eeGeneral.fixed_ID.ID_32 & 0xfefefefe);
+	srandom(0xfefefefe);
+	V911S_RF_CH_NUM = rand()&0x03;
 }
 
 static uint16_t V911S_callback()
@@ -278,7 +252,7 @@ static void V911S_initialize(uint8_t bind)
         V911S_RF_CH_NUM=0;
     #endif
 
-    V911S_init();
+    V911S_RF_init();
 
     if(bind)
     {
@@ -314,12 +288,12 @@ const void *V911S_Cmds(enum ProtoCmds cmd)
       return 0;
     case PROTOCMD_GETOPTIONS:
       SetRfOptionSettings(pgm_get_far_address(RfOpt_V911S_Ser),
-                          STR_SUBTYPE_V911S,       //Sub proto
+                          STR_DUMMY,      //Sub proto
                           STR_DUMMY,      //Option 1 (int)
                           STR_DUMMY,      //Option 2 (int)
                           STR_RFPOWER,    //Option 3 (uint 0 to 31)
                           STR_DUMMY,      //OptionBool 1
-                          STR_AUTOBIND,      //OptionBool 2
+                          STR_AUTOBIND,   //OptionBool 2
                           STR_DUMMY       //OptionBool 3
                          );
       return 0;

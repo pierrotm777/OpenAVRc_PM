@@ -78,9 +78,9 @@
 #include "SKYARTEC_cc2500.c"
 #include "CORONA_cc2500.c"
 #include "HITEC_cc2500.c"
-//#include "FRSKY_RX_cc2500.c"
-//#include "HOTT_cc2500.c"
+#include "HOTT_cc2500.c"
 //#include "FUTABA_cc2500.c"
+//#include "FRSKY_RX_cc2500.c"
 #endif
 
 #ifdef PROTO_HAS_CYRF6936
@@ -109,7 +109,8 @@
 #include "BAYANG_nrf24l01.c"
 #include "CABELL_nrf24l01.c"
 #include "STANEK_nrf24l01.c"
-#include "V911S_nrf24l01.c"
+//#include "V911S_nrf24l01.c"
+//#include "ESKY_nrf24l01.c"
 #endif
 
 #ifdef PROTO_HAS_SX1276

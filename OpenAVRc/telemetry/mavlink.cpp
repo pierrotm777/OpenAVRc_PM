@@ -1033,7 +1033,7 @@ void mavlinkReceive( uint8_t data )
       }
       break ;
 
-			case MAVLINK_MSG_ID_SYS_STATUS:
+	  case MAVLINK_MSG_ID_SYS_STATUS:
       {
 //				float batteryVoltage = (mavlink_msg_sys_status_get_voltage_battery(&Msg) / 100.0f) * 0.5238f ;
 				float batteryVoltage = (mavlink_msg_sys_status_get_voltage_battery(&Msg) / 100.0f) ;
@@ -1081,7 +1081,7 @@ void mavlinkReceive( uint8_t data )
 	    }
   	  break ;
 
-    	case MAVLINK_MSG_ID_GPS_RAW_INT:
+      case MAVLINK_MSG_ID_GPS_RAW_INT:
       {
 				uint16_t value1 ;
 				uint16_t value2 ;
